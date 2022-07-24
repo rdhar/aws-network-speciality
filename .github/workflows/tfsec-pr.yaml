@@ -1,0 +1,27 @@
+name: tfsec Code Analysis
+on:
+  pull_request:
+    paths:
+      - "**/*.tf"
+      - "**/*.tfvars"
+      - ".github/workflows/tfsec-pr.yaml"
+
+jobs:
+  main:
+    name: tfsec PR commenter
+    permissions:
+      pull-requests: write
+      contents: read
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v3
+      - name: tfsec
+        uses: aquasecurity/tfsec-pr-commenter-action@v1.2.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          working_directory: terraform
+          #* Add tfsec_args - usually the path to tfvars files
+          tfsec_args: #>-
+            #--tfvars-file=
