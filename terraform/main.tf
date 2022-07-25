@@ -79,7 +79,7 @@ resource "aws_security_group_rule" "internal_egress" {
   to_port           = 0
   protocol          = -1
   security_group_id = aws_security_group.internal.id
-  cidr_blocks       = ["0.0.0.0/0"] #!tfsec:ignore:aws-vpc-no-public-egress-sgr
+  cidr_blocks       = ["0.0.0.0/0"] #! tfsec:ignore:aws-vpc-no-public-egress-sgr
 }
 
 resource "aws_security_group" "internal" {
@@ -97,8 +97,7 @@ resource "aws_key_pair" "a4l" {
   public_key = var.ssh_key
 }
 
-#!tfsec:ignore:aws-ec2-enable-at-rest-encryption
-#!tfsec:ignore:aws-ec2-enforce-http-token-imds
+#! tfsec:ignore:aws-ec2-enable-at-rest-encryption #! tfsec:ignore:aws-ec2-enforce-http-token-imds
 resource "aws_instance" "a4l_bastion" {
   ami                         = "ami-033b95fb8079dc481"
   instance_type               = "t2.micro"
@@ -112,8 +111,7 @@ resource "aws_instance" "a4l_bastion" {
   }
 }
 
-#!tfsec:ignore:aws-ec2-enforce-http-token-imds
-#!tfsec:ignore:aws-ec2-enable-at-rest-encryption
+#! tfsec:ignore:aws-ec2-enforce-http-token-imds #! tfsec:ignore:aws-ec2-enable-at-rest-encryption
 resource "aws_instance" "a4l_internal" {
   ami                    = "ami-033b95fb8079dc481"
   instance_type          = "t2.micro"
