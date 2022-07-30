@@ -1,24 +1,24 @@
 provider "aws" {
-  profile = "aws-net-spec-creds"
+  profile = "ans-gen"
   region  = "us-east-1"
 
   default_tags {
     tags = {
-      "Project"     = "aws-net-spec"
-      "Environment" = "org"
+      "Project"     = "aws-network-specialty"
+      "Environment" = "network-specialty-general"
       "Terraform"   = true
     }
   }
 }
 
 terraform {
+  required_version = ">= 1.2.0"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
       version = ">= 3.71.0"
     }
   }
-  required_version = ">= 1.2.0"
 
   backend "remote" {
     organization = "3ware"
