@@ -37,10 +37,10 @@ repos:
       - id: terraform_tflint
         args:
           - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
-      - id: terraform_tfsec
-        args:
-          - --args=--force-all-dirs
-          - --args=--exclude-downloaded-modules
-          - --args=--concise-output
-          #* This should be added per repo if required.
-          #- --args=--tfvars-file=repos.auto.tfvars
+      # - id: terraform_tfsec
+      #   args:
+      #     - --args=--force-all-dirs
+      #     - --args=--exclude-downloaded-modules
+      #     - --args=--concise-output
+      #     #* This should be added per repo if required.
+      #     #- --args=--tfvars-file=repos.auto.tfvars
