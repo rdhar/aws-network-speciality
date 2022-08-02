@@ -5,7 +5,7 @@ provider "aws" {
   default_tags {
     tags = {
       "Project"     = "aws-network-specialty"
-      "Environment" = "network-specialty-general"
+      "Environment" = "general"
       "Terraform"   = true
     }
   }
