@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0](https://github.com/3ware/aws-network-speciality/compare/v1.1.0...v1.2.0) (2022-08-04)
+
+
+### Features
+
+* **terraform:** VPC Peering demo ([#6](https://github.com/3ware/aws-network-speciality/issues/6)) ([e6fdfcd](https://github.com/3ware/aws-network-speciality/commit/e6fdfcd3d83014dd369778bd29766ff61ed2f512))
+
 ## [1.1.0](https://github.com/3ware/aws-network-speciality/compare/v1.0.0...v1.1.0) (2022-08-02)
 
 
