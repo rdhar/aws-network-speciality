@@ -8,7 +8,7 @@ Repository to store terraform code used while studying for the ANS-C01 exam. I a
 
 - :white_check_mark: VPC Deep Dive :rocket:
 - :white_check_mark: CloudTrail :rocket:
-- :x: CloudFront
+- :white_check_mark: CloudFront - but see open [issue](https://github.com/3ware/aws-network-speciality/issues/8)
 - :white_check_mark: VPC Peering :rocket:
 
 ## To do list
