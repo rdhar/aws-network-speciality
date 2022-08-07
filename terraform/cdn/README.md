@@ -10,7 +10,7 @@ Similarly adding a `demo_domain_name` will create an ACM Certificate, DNS record
 
 Finally, setting `secure_s3_bucket` to `true` will create the origin access identity and update the bucket policy.
 
-There is an open [issue](#8) to try and make the OAI to CloudFront association dynamic based on the value of `secure_s3_bucket`. To complete the demo, the `s3_origin_config` must be uncommented.
+There is an open [issue](https://github.com/3ware/aws-network-speciality/issues/8) to try and make the OAI to CloudFront association dynamic based on the value of `secure_s3_bucket`. To complete the demo, the `s3_origin_config` must be uncommented.
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements
