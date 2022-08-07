@@ -6,6 +6,7 @@ provider "aws" {
     tags = {
       "Project"     = "aws-network-specialty"
       "Environment" = "general"
+      "Demo"        = "VPC-PEERING"
       "Terraform"   = true
     }
   }
