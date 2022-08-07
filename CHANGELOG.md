@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0](https://github.com/3ware/aws-network-speciality/compare/v1.3.0...v1.4.0) (2022-08-07)
+
+
+### Enhancement
+
+* **terraform:** Add `Demo` tag to vpc-peer aws provider ([#9](https://github.com/3ware/aws-network-speciality/issues/9)) ([f68ce80](https://github.com/3ware/aws-network-speciality/commit/f68ce80732a2fa259eebe2f42ae025a071392294))
+
 ## [1.3.0](https://github.com/3ware/aws-network-speciality/compare/v1.2.0...v1.3.0) (2022-08-07)
 
 
