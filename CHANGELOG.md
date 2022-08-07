@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0](https://github.com/3ware/aws-network-speciality/compare/v1.2.0...v1.3.0) (2022-08-07)
+
+
+### Features
+
+* **terraform:** Create CDN demo resources ([#4](https://github.com/3ware/aws-network-speciality/issues/4)) ([28bbe72](https://github.com/3ware/aws-network-speciality/commit/28bbe725f1688f5bc5329d53d806c477f2eeafe4))
+
 ## [1.2.0](https://github.com/3ware/aws-network-speciality/compare/v1.1.0...v1.2.0) (2022-08-04)
 
 
