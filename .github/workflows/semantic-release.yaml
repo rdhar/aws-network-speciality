@@ -31,7 +31,7 @@ jobs:
           organization: 3ware
 
       - name: Release
-        uses: cycjimmy/semantic-release-action@v2
+        uses: cycjimmy/semantic-release-action@v3
         with:
           semantic_version: 18.0.0
           extra_plugins: |
