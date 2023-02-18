@@ -1,18 +1,15 @@
-name: Semantic PR title
+# This file is managed by terraform and should be edited directly
+
+name: Validate PR title
 on:
-  pull_request_target:
+  pull_request:
     types:
       - opened
       - edited
       - synchronize
 
 jobs:
-  main:
-    name: Validate PR title
+  conventional-pr-title:
     permissions:
       pull-requests: read
-    runs-on: ubuntu-latest
-    steps:
-      - uses: amannn/action-semantic-pull-request@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    uses: 3ware/workflows/.github/workflows/pr-title.yaml@v1.7.0

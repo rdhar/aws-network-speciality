@@ -1,42 +1,14 @@
-name: Release
+# This file is managed by terraform and should not be updated directly
+
+name: Semantic Release
 
 on:
   workflow_dispatch:
   push:
     branches:
       - main
-    paths:
-      - "**/*.tftpl"
-      - "**/*.tf"
-      - "**/*.tfvars"
-      - ".github/workflows/semantic-release.yaml"
 
 jobs:
-  main:
-    name: semantic-release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Get Token
-        id: get_workflow_token
-        uses: peter-murray/workflow-application-token-action@v2
-        with:
-          application_id: ${{ secrets.APPLICATION_ID }}
-          application_private_key: ${{ secrets.APPLICATION_PRIVATE_KEY }}
-          organization: 3ware
-
-      - name: Release
-        uses: cycjimmy/semantic-release-action@v3
-        with:
-          semantic_version: 18.0.0
-          extra_plugins: |
-            @semantic-release/changelog@6.0.0
-            @semantic-release/git@10.0.0
-            conventional-changelog-conventionalcommits@4.6.3
-        env:
-          GITHUB_TOKEN: ${{ steps.get_workflow_token.outputs.token }}
+  semantic-release:
+    uses: 3ware/workflows/.github/workflows/semantic-release.yaml@v1.7.0
+    secrets: inherit

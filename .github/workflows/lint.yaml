@@ -1,0 +1,18 @@
+# This file is managed by terraform and should not be edited directly
+
+name: Lint
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  lint:
+    permissions:
+      contents: read
+      checks: write
+    uses: 3ware/workflows/.github/workflows/lint.yaml@v1.7.0
+    secrets: inherit
+    with:
+      terraform-version: 1.3
