@@ -22,6 +22,5 @@ jobs:
       #* | keeps new lines as new lines; 'literal style'
       #* - after > 'the chomping indicator' overrides the default behaviour
       #* 'clip' which adds a new line at the end, by stripping 'strip' it.
-#tfsec_args: >-
-# --tfvars-file=terraform/repos.auto.tfvars
-# --tfvars-file=terraform/users.auto.tfvars
+      tfsec_args: >-
+        --tfvars-file=terraform.tfvars

@@ -2,7 +2,7 @@
 
 Repository to store terraform code used while studying for the ANS-C01 exam. I am using Adrian Cantrill's [AWS Certified Advanced Networking - Specialty](https://learn.cantrill.io/p/aws-certified-advanced-networking-specialty) course to study for the exam. The course does provide CloudFormation stacks for a number of the demos, but I thought it would be ~~fun~~ challenging to recreate ~~all~~ some of the CloudFormation stacks with terraform code.
 
-[![semantic-release: conventionalcommits](https://img.shields.io/badge/semantic--release-conventionalcommits-blue?logo=semantic-release)](https://github.com/semantic-release/semantic-release) [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-yellow?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+[![semantic-release: conventionalcommits](https://img.shields.io/badge/semantic--release-conventionalcommits-blue?logo=semantic-release)](https://github.com/semantic-release/semantic-release) [![GitHub release](https://img.shields.io/github/release/3ware/aws-network-speciality?include_prereleases=&sort=semver&color=blue)](https://github.com/3ware/aws-network-speciality/releases/) [![issues - aws-network-speciality](https://img.shields.io/github/issues/3ware/aws-network-speciality)](https://github.com/3ware/aws-network-speciality/issues) [![lint](https://github.com/3ware/aws-network-speciality/workflows/lint/badge.svg)](https://github.com/3ware/aws-network-speciality/actions?query=workflow:"lint")
 
 ## Demos
 
@@ -13,4 +13,4 @@ Repository to store terraform code used while studying for the ANS-C01 exam. I a
 
 ## To do list
 
-- :x: To Do 
+- :x: To Do
