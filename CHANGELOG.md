@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.1](https://github.com/3ware/aws-network-speciality/compare/v1.4.0...v1.4.1) (2023-02-19)
+
+
+### Chores
+
+* **deps:** bump amannn/action-semantic-pull-request from 4 to 5 ([#11](https://github.com/3ware/aws-network-speciality/issues/11)) ([ab73b7f](https://github.com/3ware/aws-network-speciality/commit/ab73b7fc3b9d6ac2d020d8b3a7e5e231edd92d68))
+* **deps:** bump aquasecurity/tfsec-pr-commenter-action from 1.2.0 to 1.3.1 ([#16](https://github.com/3ware/aws-network-speciality/issues/16)) ([d129c63](https://github.com/3ware/aws-network-speciality/commit/d129c632ab84bc42889f2fbc4314b6c2bf9b1ab3))
+* **deps:** bump cycjimmy/semantic-release-action from 2 to 3 ([#14](https://github.com/3ware/aws-network-speciality/issues/14)) ([c4291b3](https://github.com/3ware/aws-network-speciality/commit/c4291b3d69c03a3003fdc719c9c6f67ad471f84d)), closes [#92](https://github.com/3ware/aws-network-speciality/issues/92) [#96](https://github.com/3ware/aws-network-speciality/issues/96) [#57](https://github.com/3ware/aws-network-speciality/issues/57) [#92](https://github.com/3ware/aws-network-speciality/issues/92) [#96](https://github.com/3ware/aws-network-speciality/issues/96) [#135](https://github.com/3ware/aws-network-speciality/issues/135) [#2](https://github.com/3ware/aws-network-speciality/issues/2) [#129](https://github.com/3ware/aws-network-speciality/issues/129) [#126](https://github.com/3ware/aws-network-speciality/issues/126) [#124](https://github.com/3ware/aws-network-speciality/issues/124)
+* **deps:** bump peter-murray/workflow-application-token-action ([#10](https://github.com/3ware/aws-network-speciality/issues/10)) ([de537a2](https://github.com/3ware/aws-network-speciality/commit/de537a23575f6c5ebc2108dae00e89a572a63151))
+* **deps:** bump wagoid/commitlint-github-action from 5.0.2 to 5.2.2 ([#13](https://github.com/3ware/aws-network-speciality/issues/13)) ([b8f6f71](https://github.com/3ware/aws-network-speciality/commit/b8f6f71770de2f56eca3964a726aad8a2d1b9289))
+
 ## [1.4.0](https://github.com/3ware/aws-network-speciality/compare/v1.3.0...v1.4.0) (2022-08-07)
 
 
