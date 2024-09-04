@@ -1,0 +1,4 @@
+skip-check:
+  - CKV_GIT_1 # Repos can be public
+  - CKV_GIT_5 # PRs only need 1 approval
+  - CKV2_GIT_1 # Disable as using repository rules

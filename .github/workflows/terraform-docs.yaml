@@ -1,17 +1,18 @@
-# This file is managed by terraform and should not be updated directly
+name: Terraform CI
 
-name: Update terraform docs
 on:
   pull_request:
-    types:
-      - opened
-      - synchronize
+    types: [closed]
+    branches: [main]
     paths:
       - "**/*.tf"
-      - "**/*.tfvars"
-      - "**/*.hcl"
+
+# Disable permissions for all available scopes
+permissions: {}
 
 jobs:
   terraform-docs:
-    uses: 3ware/workflows/.github/workflows/terraform-docs.yaml@v1.7.1
+    if: ${{ github.event.pull_request.merged == true }}
+    name: Terraform Docs
+    uses: 3ware/workflows/.github/workflows/terraform-docs.yaml@22e03ff8b79ce67f4a5059d0d24c3d07d8d69b1b # v4.2.2
     secrets: inherit
