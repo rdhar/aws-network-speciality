@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0](https://github.com/3ware/aws-network-speciality/compare/v1.4.1...v1.5.0) (2024-09-06)
+
+
+### Features
+
+* **cdn:** Remove default public acl on S3 bucket ([#23](https://github.com/3ware/aws-network-speciality/issues/23)) ([4ca377b](https://github.com/3ware/aws-network-speciality/commit/4ca377b72058a899a717954f81041e13ea54375c))
+
 ## [1.4.1](https://github.com/3ware/aws-network-speciality/compare/v1.4.0...v1.4.1) (2023-02-19)
 
 
