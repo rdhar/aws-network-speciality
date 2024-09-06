@@ -1,12 +1,13 @@
+# trunk-ignore-all(trivy) Bucket should be public initially before moving behind cloud front
+# logging and version not required for demo
 locals {
-  #* Bucket name is shared between the resource and the policy. This overcomes cycle dependancy between the two
+  #* Bucket name is shared between the resource and the policy. This overcomes cycle dependency between the two
   bucket_name = "ans-cdn-top10cats-demo-${random_string.random.result}"
   #* Do not create the CNAME when the demo domain name is not specified
   alternate_cname = var.demo_domain_name != null ? "merlin.${var.demo_domain_name}" : null
   #* Use the default CloudFront certificate when the demo domain name is not specified
   use_default_cert = var.demo_domain_name == null
 }
-
 data "aws_iam_policy_document" "bucket_policy" {
   statement {
     sid = "AllowPublicAccessToS3Bucket"
@@ -18,8 +19,8 @@ data "aws_iam_policy_document" "bucket_policy" {
     resources = ["arn:aws:s3:::${local.bucket_name}/*", ]
   }
 }
-
 data "aws_iam_policy_document" "bucket_policy_with_oai" {
+  count = var.enable_cloudfront ? 1 : 0
   statement {
     sid = "AllowAccessFromCloudFrontToS3Bucket"
     principals {
@@ -30,35 +31,34 @@ data "aws_iam_policy_document" "bucket_policy_with_oai" {
     resources = ["arn:aws:s3:::${local.bucket_name}/*"]
   }
 }
-
 data "aws_iam_policy_document" "bucket_policy_combined" {
   source_policy_documents = [(
     var.secure_s3_bucket ?
-    data.aws_iam_policy_document.bucket_policy_with_oai.json :
+    data.aws_iam_policy_document.bucket_policy_with_oai[0].json :
     data.aws_iam_policy_document.bucket_policy.json
     )
   ]
 }
-
 resource "random_string" "random" {
   length  = 12
   special = false
   upper   = false
 }
-
 module "template_files" {
-  source  = "hashicorp/dir/template"
-  version = "~> v1.0.2"
+  source = "git::https://github.com/hashicorp/terraform-template-dir.git?ref=556bd64989e7099fabb90c6b883b5d4d92da3ae8"
 
   base_dir = "${path.module}/static"
 }
 
 module "s3_bucket" {
-  source  = "terraform-aws-modules/s3-bucket/aws"
-  version = "~> v3.3.0"
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-s3-bucket.git?ref=8a0b697adfbc673e6135c70246cff7f8052ad95a"
 
-  bucket        = local.bucket_name
-  force_destroy = true
+  bucket                  = local.bucket_name
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+  force_destroy           = true
 
   attach_policy = true
   policy        = data.aws_iam_policy_document.bucket_policy_combined.json
@@ -68,27 +68,22 @@ module "s3_bucket" {
     error_document = "error.html"
   }
 }
-
 module "s3_bucket_object" {
   for_each = module.template_files.files
-  source   = "terraform-aws-modules/s3-bucket/aws//modules/object"
-  version  = "~> v3.3.0"
+  source   = "git::https://github.com/terraform-aws-modules/terraform-aws-s3-bucket.git//modules/object?ref=8a0b697adfbc673e6135c70246cff7f8052ad95a"
 
   bucket       = module.s3_bucket.s3_bucket_id
   key          = each.key
   content_type = each.value.content_type
   file_source  = each.value.source_path
 }
-
 data "aws_cloudfront_cache_policy" "this" {
   count = var.enable_cloudfront ? 1 : 0
   name  = "Managed-CachingOptimized"
 }
-
 module "cdn" {
-  count   = var.enable_cloudfront ? 1 : 0
-  source  = "terraform-aws-modules/cloudfront/aws"
-  version = "~> 2.9.3"
+  count  = var.enable_cloudfront ? 1 : 0
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-cloudfront.git?ref=a0f0506106a4c8815c1c32596e327763acbef2c2"
 
   aliases = var.demo_domain_name != null ? [local.alternate_cname] : null
 
@@ -126,31 +121,26 @@ module "cdn" {
 
   viewer_certificate = {
     acm_certificate_arn            = local.use_default_cert ? null : module.acm[0].acm_certificate_arn
-    mminimum_protocol_version      = local.use_default_cert ? null : "TLSv1.2_2021"
+    minimum_protocol_version       = local.use_default_cert ? null : "TLSv1.2_2021"
     ssl_support_method             = local.use_default_cert ? null : "sni-only"
     cloudfront_default_certificate = local.use_default_cert
   }
 }
-
 data "aws_route53_zone" "demo" {
   count = var.demo_domain_name != null ? 1 : 0
   name  = var.demo_domain_name
 }
-
 module "acm" {
-  count   = var.demo_domain_name != null ? 1 : 0
-  source  = "terraform-aws-modules/acm/aws"
-  version = "~> 4.0.1"
+  count  = var.demo_domain_name != null ? 1 : 0
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-acm.git?ref=0ca52d1497e5a54ed86f9daac0440d27afc0db8b"
 
   domain_name         = local.alternate_cname
   zone_id             = data.aws_route53_zone.demo[0].zone_id
   wait_for_validation = true
 }
-
 module "cname_record" {
-  count   = var.demo_domain_name != null ? 1 : 0
-  source  = "terraform-aws-modules/route53/aws//modules/records"
-  version = "~> 2.9.0"
+  count  = var.demo_domain_name != null ? 1 : 0
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-route53.git//modules/records?ref=32613266e7c1f2a3e4e7cd7d5808e31df8c0b81d"
 
   zone_id = data.aws_route53_zone.demo[0].zone_id
   records = [

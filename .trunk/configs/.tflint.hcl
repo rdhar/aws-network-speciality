@@ -1,3 +1,7 @@
+config {
+  plugin_dir = "~/.local/share/tflint/plugins"
+}
+
 plugin "terraform" {
   enabled = true
   preset = "all"

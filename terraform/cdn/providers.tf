@@ -4,16 +4,16 @@ provider "aws" {
 
   default_tags {
     tags = {
-      "Project"     = "aws-network-specialty"
-      "Environment" = "general"
-      "Demo"        = "CDN"
-      "Terraform"   = true
+      "3ware:project-id"       = "aws-network-speciality"
+      "3ware:environment-type" = "dev"
+      "3ware:service"          = "cdn"
+      "3ware:tofu"             = true
     }
   }
 }
 
 terraform {
-  required_version = ">= 1.2.0"
+  required_version = ">= 1.7.2"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -25,8 +25,9 @@ terraform {
     }
   }
 
-  backend "remote" {
+  cloud {
     organization = "3ware"
+    hostname     = "app.terraform.io"
     workspaces {
       name = "aws-net-spec-cdn"
     }

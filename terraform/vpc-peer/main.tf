@@ -98,9 +98,9 @@ resource "aws_security_group_rule" "ingress" {
     for rule in local.ingress_rules_per_vpc : "${rule.description}-${rule.protocol}" => rule
   }
   type              = "ingress"
-  from_port         = lookup(each.value, "port")
-  to_port           = lookup(each.value, "port")
-  protocol          = lookup(each.value, "protocol")
+  from_port         = each.value["port"]
+  to_port           = each.value["port"]
+  protocol          = each.value["protocol"]
   cidr_blocks       = lookup(each.value, "cidr_blocks", [])
   ipv6_cidr_blocks  = lookup(each.value, "ipv6_cidr_blocks", [])
   security_group_id = aws_security_group.this[each.value.vpc_name].id

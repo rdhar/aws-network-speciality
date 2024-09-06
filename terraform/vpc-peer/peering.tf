@@ -14,8 +14,8 @@ module "vpc_peering" {
     aws.peer = aws
   }
 
-  this_vpc_id = module.vpc["${each.value.this_vpc_id}"].vpc_id
-  peer_vpc_id = module.vpc["${each.value.that_vpc_id}"].vpc_id
+  this_vpc_id = module.vpc[each.value.this_vpc_id].vpc_id
+  peer_vpc_id = module.vpc[each.value.that_vpc_id].vpc_id
 
   auto_accept_peering = true
 }
