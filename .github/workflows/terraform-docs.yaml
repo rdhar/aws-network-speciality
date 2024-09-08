@@ -1,4 +1,4 @@
-name: Tofu CI
+name: OpenTofu CI
 
 on:
   pull_request:
@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - "**/*.tf"
+      - "**.*.tfvars"
 
 # Disable permissions for all available scopes
 permissions: {}

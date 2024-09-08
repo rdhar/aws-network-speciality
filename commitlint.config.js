@@ -17,6 +17,7 @@ module.exports = {
         "org",
         "pr-check",
         "release",
+        "tofu",
         "tofu-ci",
         "trunk",
         "vpc",
