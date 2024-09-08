@@ -20,7 +20,7 @@ lint:
   disabled:
     - terrascan
   enabled:
-    - tofu@1.8.1:
+    - tofu@1.8.2:
         commands: [fmt, validate]
     - checkov@3.2.243
     - trivy@0.55.0

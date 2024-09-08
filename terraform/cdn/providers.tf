@@ -1,5 +1,6 @@
 provider "aws" {
-  region = "us-east-1"
+  profile = "ans-gen"
+  region  = "us-east-1"
 
   default_tags {
     tags = {
@@ -12,7 +13,7 @@ provider "aws" {
 }
 
 terraform {
-  required_version = ">= 1.7.2"
+  required_version = ">= 1.8.2"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
