@@ -17,7 +17,7 @@ There is an open [issue](https://github.com/3ware/aws-network-speciality/issues/
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.7.2 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.8.2 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 4.40.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.3.2 |
 
@@ -25,8 +25,8 @@ There is an open [issue](https://github.com/3ware/aws-network-speciality/issues/
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.66.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.3.2 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 4.40.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | ~> 3.3.2 |
 
 ## Modules
 

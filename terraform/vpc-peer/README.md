@@ -7,7 +7,7 @@ Use this terraform code to create all the resources for the vpc peering demo. Pl
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.7.2 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.8.2 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 4.0.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.3.2 |
 
