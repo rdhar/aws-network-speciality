@@ -1,5 +1,3 @@
-# trunk-ignore-all(trivy) Bucket should be public initially before moving behind cloud front
-# logging and version not required for demo
 locals {
   #* Bucket name is shared between the resource and the policy. This overcomes cycle dependency between the two
   bucket_name = "ans-cdn-top10cats-demo-${random_string.random.result}"
@@ -50,6 +48,7 @@ module "template_files" {
   base_dir = "${path.module}/static"
 }
 
+# trunk-ignore(trivy)
 module "s3_bucket" {
   source = "git::https://github.com/terraform-aws-modules/terraform-aws-s3-bucket.git?ref=8a0b697adfbc673e6135c70246cff7f8052ad95a"
 
@@ -81,6 +80,8 @@ data "aws_cloudfront_cache_policy" "this" {
   count = var.enable_cloudfront ? 1 : 0
   name  = "Managed-CachingOptimized"
 }
+
+# trunk-ignore(trivy)
 module "cdn" {
   count  = var.enable_cloudfront ? 1 : 0
   source = "git::https://github.com/terraform-aws-modules/terraform-aws-cloudfront.git?ref=a0f0506106a4c8815c1c32596e327763acbef2c2"
@@ -110,7 +111,9 @@ module "cdn" {
 
   default_root_object = "index.html"
 
+  /* cSpell:disable */
   default_cache_behavior = {
+    /* cSpell:ensable */
     use_forwarded_values   = false
     viewer_protocol_policy = "allow-all"
     allowed_methods        = ["GET", "HEAD"]

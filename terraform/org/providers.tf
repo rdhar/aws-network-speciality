@@ -1,28 +1,27 @@
 provider "aws" {
-  profile = "3ware-org-admin"
-  region  = "us-east-1"
+  region = "us-east-1"
 
   default_tags {
     tags = {
-      "Project"     = "aws-network-specialty"
-      "Environment" = "general"
-      "Demo"        = "ORG"
-      "Terraform"   = true
+      "3ware:project-id"       = "aws-network-speciality"
+      "3ware:environment-type" = "dev"
+      "3ware:service"          = "org"
+      "3ware:tofu"             = true
     }
   }
 }
-
 terraform {
   required_version = ">= 1.7.2"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 3.71.0"
+      version = ">= 4.0.0"
     }
   }
 
-  backend "remote" {
+  cloud {
     organization = "3ware"
+    hostname     = "app.terraform.io"
     workspaces {
       name = "aws-net-spec-org"
     }

@@ -17,7 +17,7 @@ module.exports = {
         "org",
         "pr-check",
         "release",
-        "terraform-ci",
+        "tofu-ci",
         "trunk",
         "vpc",
         "vpc-peer",

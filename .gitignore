@@ -37,3 +37,4 @@ terraform.rc
 
 # Exclude pem files used for authentication
 *.pem
+.envrc
