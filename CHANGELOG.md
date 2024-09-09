@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.1](https://github.com/3ware/aws-network-speciality/compare/v1.5.0...v1.5.1) (2024-09-09)
+
+
+### Bug Fixes
+
+* **tofu:** Upgrade tofu provider versions ([#28](https://github.com/3ware/aws-network-speciality/issues/28)) ([dcd7051](https://github.com/3ware/aws-network-speciality/commit/dcd7051643d90bacc6ab70858e419697fa95d031))
+
 ## [1.5.0](https://github.com/3ware/aws-network-speciality/compare/v1.4.1...v1.5.0) (2024-09-06)
 
 
