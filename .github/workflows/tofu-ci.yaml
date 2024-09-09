@@ -1,12 +1,17 @@
-name: OpenTofu Preview
+name: OpenTofu CI
 
-#TODO: Set paths to only run on .tf etc files when testing finished
 on:
   pull_request:
     types: [opened, synchronize]
     branches: [main]
+    paths:
+      - "**/*.tf"
+      - "**.*.tfvars"
   push:
     branches: [main]
+    paths:
+      - "**/*.tf"
+      - "**.*.tfvars"
 
 # Disable permissions for all available scopes
 permissions: {}
@@ -16,8 +21,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  preview:
-    name: Plan OpenTofu changes
+  plan-and-apply:
+    name: Plan / Apply OpenTofu changes
     permissions:
       actions: read # Required to download repository artifact.
       checks: write # Required to add status summary.
@@ -56,12 +61,11 @@ jobs:
           arg_chdir: terraform/org
           arg_command: ${{ github.event_name == 'push' && 'apply' || 'plan' }}
           arg_lock: ${{ github.event_name == 'push' && 'true' || 'false' }}
-          plan_parity: true
 
   #! Only works with terraform
   #TODO: Fork and update index.ts to use tofu instead
   # inkdrop-run:
-  #   needs: preview
+  #   needs: plan-and-apply
   #   uses: inkdrop-org/inkdrop-visualizer/.github/workflows/inkdrop-plan.yml@main
   #   with:
   #     data_branch_name: ${{ github.head_ref }}
@@ -69,4 +73,9 @@ jobs:
   #     plan_file_name: tfplan
   #     terraform_version: 1.8.2
 
-  #TODO: Apply
+  terraform-docs:
+    if: ${{ github.event_name == 'push' }}
+    needs: plan-and-apply
+    name: Terraform Docs
+    uses: 3ware/workflows/.github/workflows/terraform-docs.yaml@22e03ff8b79ce67f4a5059d0d24c3d07d8d69b1b # v4.2.2
+    secrets: inherit

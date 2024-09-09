@@ -13,10 +13,12 @@ module.exports = {
       [
         "cdn",
         "commitlint",
+        "dep-review",
         "github",
         "org",
         "pr-check",
         "release",
+        "scorecard",
         "tofu",
         "tofu-ci",
         "trunk",
