@@ -1,7 +1,6 @@
 provider "aws" {
-  profile = "3ware-org-admin"
-  region  = "us-east-1"
-
+  #profile = "3ware-org-admin"
+  region = "us-east-1"
   default_tags {
     tags = {
       "3ware:project-id"       = "aws-network-speciality"

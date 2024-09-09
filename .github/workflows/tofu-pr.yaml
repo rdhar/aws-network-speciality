@@ -1,0 +1,72 @@
+name: OpenTofu Preview
+
+#TODO: Set paths to only run on .tf etc files when testing finished
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: [main]
+  push:
+    branches: [main]
+
+# Disable permissions for all available scopes
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.repository }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    name: Plan OpenTofu changes
+    permissions:
+      actions: read # Required to download repository artifact.
+      checks: write # Required to add status summary.
+      contents: read # Required to checkout repository.
+      id-token: write # Required to authenticate via OIDC.
+      pull-requests: write # Required to add PR comment and label.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TF_TOKEN_APP_TERRAFORM_IO: ${{ secrets.TF_TOKEN_APP_TERRAFORM_IO }}
+    outputs:
+      plan_id: ${{ steps.tf-plan.outputs.identifier }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ANS_ORG_OIDC_ROLE_ARN }}
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@12f4debbf681675350b6cd1f0ff8ecfbda62027b # v1.0.4
+        with:
+          #TODO: Dynamic version from tenv or something, duplicated in multiple jobs / steps
+          tofu_version: 1.8.2
+          tofu_wrapper: true
+
+      - name: Provision TF
+        id: tf-plan
+        uses: devsectop/tf-via-pr@8ec105a049bb047a7ed5ee182c9548e2208dce86 # v11.1.0
+        with:
+          #TODO: Dynamic working dir using tf-actions of similar, with matrix
+          arg_chdir: terraform/org
+          arg_command: ${{ github.event_name == 'push' && 'apply' || 'plan' }}
+          arg_lock: ${{ github.event_name == 'push' && 'true' || 'false' }}
+          plan_parity: true
+
+  #! Only works with terraform
+  #TODO: Fork and update index.ts to use tofu instead
+  # inkdrop-run:
+  #   needs: preview
+  #   uses: inkdrop-org/inkdrop-visualizer/.github/workflows/inkdrop-plan.yml@main
+  #   with:
+  #     data_branch_name: ${{ github.head_ref }}
+  #     plan_artifact: ${{ needs.preview.outputs.plan_id }}
+  #     plan_file_name: tfplan
+  #     terraform_version: 1.8.2
+
+  #TODO: Apply
