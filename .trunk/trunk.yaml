@@ -52,7 +52,7 @@ lint:
     - linters: [prettier, markdownlint]
       paths:
         - CHANGELOG.md
-        - terraform/**/README.md
+        - tf/**/README.md
     - linters: [prettier]
       paths:
         - "**/*.enc.yaml"

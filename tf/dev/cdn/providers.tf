@@ -1,13 +1,13 @@
 provider "aws" {
-  profile = "ans-gen"
-  region  = "us-east-1"
+  #profile = "ans-gen"
+  region = "us-east-1"
 
   default_tags {
     tags = {
-      "3ware:project-id"       = "aws-network-speciality"
-      "3ware:environment-type" = "dev"
-      "3ware:service"          = "cdn"
-      "3ware:tofu"             = true
+      "3ware:project-id"      = "aws-network-speciality"
+      "3ware:environment"     = var.environment
+      "3ware:service"         = "cdn"
+      "3ware:managed-by-tofu" = true
     }
   }
 }
