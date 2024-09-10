@@ -44,7 +44,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
         with:
           aws-region: us-east-1
-          role-to-assume: ${{ secrets.AWS_ANS_ORG_OIDC_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_ORG_OIDC_ROLE_ARN }}
 
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@12f4debbf681675350b6cd1f0ff8ecfbda62027b # v1.0.4

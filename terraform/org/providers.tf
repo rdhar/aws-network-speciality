@@ -3,10 +3,10 @@ provider "aws" {
   region = "us-east-1"
   default_tags {
     tags = {
-      "3ware:project-id"       = "aws-network-speciality"
-      "3ware:environment-type" = "dev"
-      "3ware:service"          = "org"
-      "3ware:tofu"             = true
+      "3ware:project-id"      = "aws-network-speciality"
+      "3ware:environment"     = "glb"
+      "3ware:service"         = "org"
+      "3ware:managed-by-tofu" = true
     }
   }
 }

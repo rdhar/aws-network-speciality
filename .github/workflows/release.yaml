@@ -5,6 +5,7 @@ on:
   workflow_run:
     workflows: [OpenTofu CI]
     types: [completed]
+    branches: [main]
 
 # Disable permissions for all available scopes
 permissions: {}
