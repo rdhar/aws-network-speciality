@@ -1,12 +1,12 @@
 provider "aws" {
-  #profile = "ans-gen"
+  #profile = "3ware-dev"
   region = "us-east-1"
 
   default_tags {
     tags = {
       "3ware:project-id"      = "aws-network-speciality"
       "3ware:environment"     = var.environment
-      "3ware:service"         = "cdn"
+      "3ware:service"         = var.service
       "3ware:managed-by-tofu" = true
     }
   }
@@ -29,7 +29,7 @@ terraform {
     organization = "3ware"
     hostname     = "app.terraform.io"
     workspaces {
-      name = "aws-net-spec-cdn"
+      name = "aws-net-spec-${var.service}-${var.environment}"
     }
   }
 }

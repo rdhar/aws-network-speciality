@@ -1,3 +1,6 @@
+environment = "dev"
+service     = "vpc-peer"
+
 vpc = {
   a4l-vpca = {
     cidr            = "10.16.0.0/16"

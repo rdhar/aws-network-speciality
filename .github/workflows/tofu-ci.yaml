@@ -5,13 +5,13 @@ on:
     types: [opened, synchronize]
     branches: [main]
     paths:
-      - "**/*.tf"
-      - "**.*.tfvars"
+      - tf/**/*.tf
+      - tf/**.*.tfvars
   push:
     branches: [main]
     paths:
-      - "**/*.tf"
-      - "**.*.tfvars"
+      - tf/**/*.tf
+      - tf/**.*.tfvars
 
 # Disable permissions for all available scopes
 permissions: {}
@@ -21,8 +21,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  plan-and-apply:
-    name: Open Tofu CI
+  #TODO: Use find-terraform to get directory
+  plan-and-apply-dev:
+    name: Open Tofu CI Development
     permissions:
       actions: read # Required to download repository artifact.
       checks: write # Required to add status summary.
@@ -31,14 +32,35 @@ jobs:
       pull-requests: write # Required to add PR comment and label.
     uses: ./.github/workflows/tofu-ci-reuse.yaml
     with:
-      tf-directory: tf/dev/cdn
+      environment: development
+      tf-directory: tf/dev/vpc
     secrets:
       backend-credentials: ${{ secrets.TF_TOKEN_APP_TERRAFORM_IO }}
-      aws-oidc-role: ${{ secrets.AWS_ORG_OIDC_ROLE_ARN }}
+      provider-credentials: ${{ secrets.AWS_DEV_OIDC_ROLE_ARN }}
+
+    #TODO Copy files from dev to prod
+
+  plan-and-apply-prd:
+    needs: [plan-and-apply-dev]
+    if: ${{ github.ref == 'refs/heads/main'}}
+    name: Open Tofu CI Production
+    permissions:
+      actions: read # Required to download repository artifact.
+      checks: write # Required to add status summary.
+      contents: read # Required to checkout repository.
+      id-token: write # Required to authenticate via OIDC.
+      pull-requests: write # Required to add PR comment and label.
+    uses: ./.github/workflows/tofu-ci-reuse.yaml
+    with:
+      environment: production
+      tf-directory: tf/prd/vpc
+    secrets:
+      backend-credentials: ${{ secrets.TF_TOKEN_APP_TERRAFORM_IO }}
+      provider-credentials: ${{ secrets.AWS_PRD_OIDC_ROLE_ARN }}
 
   terraform-docs:
     if: ${{ github.event_name == 'push' }}
-    needs: plan-and-apply
+    needs: [plan-and-apply-prd]
     name: Terraform Docs
     uses: 3ware/workflows/.github/workflows/terraform-docs.yaml@22e03ff8b79ce67f4a5059d0d24c3d07d8d69b1b # v4.2.2
     secrets: inherit
