@@ -5,4 +5,4 @@ service     = "vpc"
 trusted_ips = ["192.0.2.1/32"]
 
 # Add public SSH key
-ssh_key = "bbaed9a367ea365bf982307ba5e4b873"
+ssh_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMNSplDEGibL7tUs87JsuwnHmDA2uSB+M2kUlOQuI0Fc"
