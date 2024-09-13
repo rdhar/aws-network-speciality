@@ -2,18 +2,13 @@ name: OpenTofu CI
 
 on:
   pull_request:
-    types: [opened, synchronize]
     branches: [main]
-    paths:
-      - tf/**/*.tf
-      - tf/**/*.tfvars
+    paths: tf/**/*.{tf,tfvars}
   push:
     branches: [main]
-    paths:
-      - tf/**/*.tf
-      - tf/**/*.tfvars
+    paths: tf/**/*.{tf,tfvars}
 
-# Disable permissions for all available scopes
+# Disable permissions for all available scopes.
 permissions: {}
 
 concurrency:
@@ -21,46 +16,77 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  #TODO: Use find-terraform to get directory
+  find-terraform-dir:
+    permissions:
+      contents: read
+    uses: 3ware/workflows/.github/workflows/get-terraform-dir.yaml@0d6555cee0e14d49262dd42adb21bb077a188585 # v4.3.0
+
   plan-and-apply-dev:
     name: Open Tofu CI Development
+    needs: [find-terraform-dir]
+    runs-on: ubuntu-24.04
+
     permissions:
       actions: read # Required to download repository artifact.
       checks: write # Required to add status summary.
       contents: read # Required to checkout repository.
       id-token: write # Required to authenticate via OIDC.
       pull-requests: write # Required to add PR comment and label.
-    uses: ./.github/workflows/tofu-ci-reuse.yaml
-    with:
-      environment: development
-      tf-directory: tf/dev/vpc
-    secrets:
-      backend-credentials: ${{ secrets.TF_TOKEN_APP_TERRAFORM_IO }}
-      provider-credentials: ${{ secrets.AWS_DEV_OIDC_ROLE_ARN }}
 
-    #TODO Copy files from dev to prod
+    strategy:
+      matrix:
+        terraform-dir: ${{ fromJSON(needs.find-terraform-dir.outputs.terraform-dir) }}
 
-  plan-and-apply-prd:
-    needs: [plan-and-apply-dev]
-    if: ${{ github.ref == 'refs/heads/main'}}
-    name: Open Tofu CI Production
-    permissions:
-      actions: read # Required to download repository artifact.
-      checks: write # Required to add status summary.
-      contents: read # Required to checkout repository.
-      id-token: write # Required to authenticate via OIDC.
-      pull-requests: write # Required to add PR comment and label.
-    uses: ./.github/workflows/tofu-ci-reuse.yaml
-    with:
-      environment: production
-      tf-directory: tf/prd/vpc
-    secrets:
-      backend-credentials: ${{ secrets.TF_TOKEN_APP_TERRAFORM_IO }}
-      provider-credentials: ${{ secrets.AWS_PRD_OIDC_ROLE_ARN }}
+    env:
+      TF_TOKEN_APP_TERRAFORM_IO: ${{ secrets.TF_TOKEN_APP_TERRAFORM_IO }}
 
-  terraform-docs:
-    if: ${{ github.event_name == 'push' }}
-    needs: [plan-and-apply-prd]
-    name: Terraform Docs
-    uses: 3ware/workflows/.github/workflows/terraform-docs.yaml@22e03ff8b79ce67f4a5059d0d24c3d07d8d69b1b # v4.2.2
-    secrets: inherit
+    # Set environment for push events only.
+    environment: ${{ github.event_name == 'push' && 'development' || '' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_DEV_OIDC_ROLE_ARN }}
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@12f4debbf681675350b6cd1f0ff8ecfbda62027b # v1.0.4
+        with:
+          #TODO: Read version from providers.tf
+          tofu_version: 1.8.2
+          tofu_wrapper: true
+
+      - name: Provision infrastructure
+        uses: devsectop/tf-via-pr@86ff2b5756fb1c483c7c3ecc86f7c320c97a7302 # v11.4.1
+        with:
+          arg_chdir: ${{ matrix.terraform-dir }}
+          arg_command: ${{ github.event_name == 'push' && 'apply' || 'plan' }}
+          arg_lock: ${{ github.event_name == 'push' && 'true' || 'false' }}
+
+      - name: Check idempotency
+        id: idempotency
+        if: github.event_name == 'push'
+        uses: devsectop/tf-via-pr@86ff2b5756fb1c483c7c3ecc86f7c320c97a7302 # v11.4.1
+        with:
+          arg_chdir: ${{ matrix.terraform-dir }}
+          arg_command: plan
+          arg_lock: false
+          arg_detailed_exitcode: true
+
+      - name: Exit if idempotent
+        if: github.event_name == 'push' && steps.idempotency.outputs.exitcode != 0
+        shell: bash
+        run: exit ${{ steps.idempotency.outputs.exitcode }}
+
+      - name: Clean up resources
+        if: github.event_name == 'push'
+        uses: devsectop/tf-via-pr@86ff2b5756fb1c483c7c3ecc86f7c320c97a7302 # v11.4.1
+        with:
+          arg_chdir: ${{ matrix.terraform-dir }}
+          arg_command: destroy
+          arg_lock: true
+          arg_auto_approve: true
