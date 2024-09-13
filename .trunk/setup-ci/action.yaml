@@ -14,6 +14,11 @@ runs:
           tf/**/*.tfvars
         dir_names: true
 
+    - name: Directory output
+      shell: bash
+      run: |
+        echo ${{ steps.tf-dir.outputs.all_changed_files }}
+
     # Install OpenTofu
     - name: Setup OpenTofu
       if: ${{ steps.tf-dir.outputs.all_changed_files != '' }}
@@ -27,5 +32,5 @@ runs:
         TF_DIRS: ${{ steps.tf-dir.outputs.all_changed_files }}
       run: |
         for dir in ${TF_DIRS}; do
-          cd $GITHUB_WORKSPACE/$dir && tofu init --backend=false
+          tofu -chdir=$GITHUB_WORKSPACE/$dir init --backend=false
         done
