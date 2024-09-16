@@ -132,7 +132,7 @@ resource "aws_key_pair" "a4l" {
 # trunk-ignore(trivy)
 # trunk-ignore(checkov)
 resource "aws_instance" "a4l_bastion" {
-  ami                         = "ami-033b95fb8079dc481"
+  ami                         = "ami-033b95fb8079dc48"
   instance_type               = "t2.micro"
   subnet_id                   = module.vpc.public_subnets[0]
   associate_public_ip_address = true
