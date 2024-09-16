@@ -39,9 +39,8 @@ lint:
           value: ${workspace}/.trunk/configs/.tflint.hcl
         - name: TFLINT_PLUGIN_DIR
           value: ${workspace}/.trunk/plugins/
-        #* This works locally when a role has been assumed with granted
-        #! Not currently configured in CI because action.yaml is composite and
-        #! cannot access secrets. See setup-ci/action.yaml
+        #* Disabled, required for deep check of AWS plugin rules, but
+        #* cannot be used currently due to missing GitHub token permissions
         # - name: AWS_ACCESS_KEY_ID
         #   value: ${env.AWS_ACCESS_KEY_ID}
         # - name: AWS_SECRET_ACCESS_KEY

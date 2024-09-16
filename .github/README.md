@@ -10,3 +10,12 @@ Repository to store terraform code used while studying for the ANS-C01 exam. I a
 - :white_check_mark: CloudTrail :rocket:
 - :white_check_mark: CloudFront - but see open [issue](https://github.com/3ware/aws-network-speciality/issues/8)
 - :white_check_mark: VPC Peering :rocket:
+
+## Workflow
+
+We use [trunk.io's](https://trunk.io) code quality function for formatting and linting. Trunk git hooks run pre-commit and pre-push. The Github App is integrated into the repository to run trunk in pull requests. Because OpenTofu and tflint, with the AWS plugin and deep checking, are enabled, some additional setup for trunk is required. This is done using a GitHub composite action stored in the [.trunk/setup-ci](.trunk/setup-ci) folder described in [trunk's CI custom setup logic documentation](https://docs.trunk.io/code-quality/setup-and-installation/github-integration#optional-custom-setup-logic).
+
+This action runs a series of steps to find terraform changes in the dev environment, login to the AWS dev environment, using the GitHub OIDC provider, and store the credentials as environment variables. Subsequent steps, install tflint and OpenTofu and then `init` both those tools in the directories discovered in the first step. The AWS environment variable credentials are passed into trunk's environment via the tflint definition to allow the tflint AWS plugin to perform [deep checking](https://github.com/terraform-linters/tflint-ruleset-aws/blob/master/docs/deep_checking.md). The AWS plugin is kept up to date by [renovate bot](https://docs.renovatebot.com/modules/manager/tflint-plugin/).
+
+> [!NOTE]
+> To keep things simple, tflint deep checking will only work in the dev environment currently because the setup action is configured with the AWS dev account role. A nested action could be used in the future for other accounts.
