@@ -12,6 +12,7 @@ module.exports = {
       "always",
       [
         "cdn",
+        "checks",
         "commitlint",
         "dep-review",
         "github",
