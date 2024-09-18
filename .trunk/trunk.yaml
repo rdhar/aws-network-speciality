@@ -39,14 +39,12 @@ lint:
           value: ${workspace}/.trunk/configs/.tflint.hcl
         - name: TFLINT_PLUGIN_DIR
           value: ${workspace}/.trunk/plugins/
-        #* Disabled, required for deep check of AWS plugin rules, but
-        #* cannot be used currently due to missing GitHub token permissions
-        # - name: AWS_ACCESS_KEY_ID
-        #   value: ${env.AWS_ACCESS_KEY_ID}
-        # - name: AWS_SECRET_ACCESS_KEY
-        #   value: ${env.AWS_SECRET_ACCESS_KEY}
-        # - name: AWS_SESSION_TOKEN
-        #   value: ${env.AWS_SESSION_TOKEN}
+        - name: AWS_ACCESS_KEY_ID
+          value: ${env.AWS_ACCESS_KEY_ID}
+        - name: AWS_SECRET_ACCESS_KEY
+          value: ${env.AWS_SECRET_ACCESS_KEY}
+        - name: AWS_SESSION_TOKEN
+          value: ${env.AWS_SESSION_TOKEN}
     - name: tofu
       environment:
         - name: XDG_CONFIG_HOME

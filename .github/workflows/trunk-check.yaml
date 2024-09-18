@@ -1,0 +1,31 @@
+name: Trunk Check
+
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "**/*.tf"
+      - "**/*.tfvars"
+
+# Disable permissions for all available scopes.
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.repository }}
+  cancel-in-progress: true
+
+jobs:
+  trunk-check:
+    name: Trunk Check
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Trunk Check
+        uses: trunk-io/trunk-action@a19f8a0d6676d8ef1e60bda132f3fbab23cc2aa5
+        with:
+          arguments: --filter -tflint,-tofu
