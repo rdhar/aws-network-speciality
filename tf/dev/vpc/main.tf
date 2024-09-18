@@ -24,7 +24,7 @@ module "vpc" {
 
   create_igw             = true
   create_egress_only_igw = false
-  enable_nat_gateway     = true
+  enable_nat_gateway     = false
   single_nat_gateway     = false
   one_nat_gateway_per_az = true
 
