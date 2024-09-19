@@ -16,12 +16,12 @@ variable "service" {
   nullable    = false
 }
 
-variable "trusted_ips" {
-  description = "Trusted IP addresses for bastion host access"
-  type        = set(string)
-}
+# variable "trusted_ips" {
+#   description = "Trusted IP addresses for bastion host access"
+#   type        = set(string)
+# }
 
-variable "ssh_key" {
-  description = "Trusted keys for bastion host access"
-  type        = string
-}
+# variable "ssh_key" {
+#   description = "Trusted keys for bastion host access"
+#   type        = string
+# }

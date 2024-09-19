@@ -23,7 +23,7 @@ jobs:
   find-terraform:
     outputs:
       tf-dir-json: ${{ steps.tf-dir-json.outputs.all_changed_files }}
-    name: Trunk Check TF
+    name: Find TF files
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -152,6 +152,7 @@ jobs:
           arg_command: ${{ github.event_name == 'push' && 'apply' || 'plan' }}
           arg_lock: ${{ github.event_name == 'push' && 'true' || 'false' }}
 
+      # This plan should not produce a diff
       - name: Check idempotency
         id: idempotency
         if: github.event_name == 'push'
@@ -161,6 +162,11 @@ jobs:
           arg_command: plan
           arg_lock: false
           arg_detailed_exitcode: true
+          arg_out: tfplan-check # Give this plan a different name
+
+      # Exit if a diff is produced and raise an issue to investigate
+      #TODO: Create issue on failure here
+      # - name: Create diff issue
 
       - name: Exit if idempotent
         if: github.event_name == 'push' && steps.idempotency.outputs.exitcode != 0
@@ -172,6 +178,11 @@ jobs:
         uses: devsectop/tf-via-pr@86ff2b5756fb1c483c7c3ecc86f7c320c97a7302 # v11.4.1
         with:
           arg_chdir: ${{ matrix.terraform-dir }}
-          arg_command: destroy
+          arg_command: apply
+          arg_destroy: true
           arg_lock: true
           arg_auto_approve: true
+
+      # TODO: Terraform docs
+
+      # TODO: Create branch / PR for prod

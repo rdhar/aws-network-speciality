@@ -1,6 +1,6 @@
-locals {
-  admin_port = 22
-}
+# locals {
+#   admin_port = 22
+# }
 # trunk-ignore(trivy/AVD-AWS-0178): Flow log not required as demo vpc
 module "vpc" {
   source = "git::https://github.com/terraform-aws-modules/terraform-aws-vpc.git?ref=e226cc15a7b8f62fd0e108792fea66fa85bcb4b9"
@@ -36,124 +36,124 @@ module "vpc" {
 # If 2 CIDRs are supplied, the provider creates 2 rules as you can only have 1 CIDR per rule
 # Any CRUD operations where a CIDR is changed could fail because of duplicate values
 # It is simpler to create 1 rule resource per CIDR block using for_each
-resource "aws_security_group_rule" "bastion_ingress" {
-  for_each          = var.trusted_ips
-  description       = "Inbound traffic to bastion hosts"
-  type              = "ingress"
-  from_port         = local.admin_port
-  to_port           = local.admin_port
-  protocol          = "tcp"
-  security_group_id = aws_security_group.bastion.id
-  cidr_blocks       = [each.value]
+# resource "aws_security_group_rule" "bastion_ingress" {
+#   for_each          = var.trusted_ips
+#   description       = "Inbound traffic to bastion hosts"
+#   type              = "ingress"
+#   from_port         = local.admin_port
+#   to_port           = local.admin_port
+#   protocol          = "tcp"
+#   security_group_id = aws_security_group.bastion.id
+#   cidr_blocks       = [each.value]
 
-  lifecycle {
-    create_before_destroy = true
-  }
-}
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
 
-resource "aws_security_group_rule" "bastion_egress" {
-  for_each          = toset(module.vpc.private_subnets_cidr_blocks)
-  description       = "Outbound traffic private subnets"
-  type              = "egress"
-  from_port         = local.admin_port
-  to_port           = local.admin_port
-  protocol          = "tcp"
-  security_group_id = aws_security_group.bastion.id
-  cidr_blocks       = [each.value]
+# resource "aws_security_group_rule" "bastion_egress" {
+#   for_each          = toset(module.vpc.private_subnets_cidr_blocks)
+#   description       = "Outbound traffic private subnets"
+#   type              = "egress"
+#   from_port         = local.admin_port
+#   to_port           = local.admin_port
+#   protocol          = "tcp"
+#   security_group_id = aws_security_group.bastion.id
+#   cidr_blocks       = [each.value]
 
-  lifecycle {
-    create_before_destroy = true
-  }
-}
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
 
-resource "aws_security_group" "bastion" {
-  name        = "A4L-BASTION"
-  description = "Security Group for A4L Bastion Host"
-  vpc_id      = module.vpc.vpc_id
+# resource "aws_security_group" "bastion" {
+#   name        = "A4L-BASTION"
+#   description = "Security Group for A4L Bastion Host"
+#   vpc_id      = module.vpc.vpc_id
 
-  tags = {
-    Name = "A4L-BASTION"
-  }
+#   tags = {
+#     Name = "A4L-BASTION"
+#   }
 
-  # Ensure any "recreate" changes don't disrupt service
-  lifecycle {
-    create_before_destroy = true
-  }
-}
+#   # Ensure any "recreate" changes don't disrupt service
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
 
-resource "aws_security_group_rule" "internal_ingress" {
-  description              = "Inbound traffic to internal hosts"
-  type                     = "ingress"
-  from_port                = local.admin_port
-  to_port                  = local.admin_port
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.internal.id
-  source_security_group_id = aws_security_group.bastion.id
+# resource "aws_security_group_rule" "internal_ingress" {
+#   description              = "Inbound traffic to internal hosts"
+#   type                     = "ingress"
+#   from_port                = local.admin_port
+#   to_port                  = local.admin_port
+#   protocol                 = "tcp"
+#   security_group_id        = aws_security_group.internal.id
+#   source_security_group_id = aws_security_group.bastion.id
 
-  lifecycle {
-    create_before_destroy = true
-  }
-}
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
 
-# trunk-ignore(trivy/AVD-AWS-0104): Egress rule
-resource "aws_security_group_rule" "internal_egress" {
-  description       = "Outbound traffic from internal hosts"
-  type              = "egress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = -1
-  security_group_id = aws_security_group.internal.id
-  cidr_blocks       = ["0.0.0.0/0"]
+# # trunk-ignore(trivy/AVD-AWS-0104): Egress rule
+# resource "aws_security_group_rule" "internal_egress" {
+#   description       = "Outbound traffic from internal hosts"
+#   type              = "egress"
+#   from_port         = 0
+#   to_port           = 0
+#   protocol          = -1
+#   security_group_id = aws_security_group.internal.id
+#   cidr_blocks       = ["0.0.0.0/0"]
 
-  lifecycle {
-    create_before_destroy = true
-  }
-}
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
 
-resource "aws_security_group" "internal" {
-  name        = "A4L-INTERNAL"
-  description = "Security Group for A4L internal Host"
-  vpc_id      = module.vpc.vpc_id
+# resource "aws_security_group" "internal" {
+#   name        = "A4L-INTERNAL"
+#   description = "Security Group for A4L internal Host"
+#   vpc_id      = module.vpc.vpc_id
 
-  tags = {
-    Name = "A4L-INTERNAL"
-  }
+#   tags = {
+#     Name = "A4L-INTERNAL"
+#   }
 
-  lifecycle {
-    create_before_destroy = true
-  }
-}
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
 
-resource "aws_key_pair" "a4l" {
-  key_name   = "A4L"
-  public_key = var.ssh_key
-}
+# resource "aws_key_pair" "a4l" {
+#   key_name   = "A4L"
+#   public_key = var.ssh_key
+# }
 
-# trunk-ignore(trivy)
-# trunk-ignore(checkov)
-resource "aws_instance" "a4l_bastion" {
-  ami                         = "ami-033b95fb8079dc481"
-  instance_type               = "t2.micro"
-  subnet_id                   = module.vpc.public_subnets[0]
-  associate_public_ip_address = true
-  vpc_security_group_ids      = [aws_security_group.bastion.id]
-  key_name                    = aws_key_pair.a4l.key_name
+# # trunk-ignore(trivy)
+# # trunk-ignore(checkov)
+# resource "aws_instance" "a4l_bastion" {
+#   ami                         = "ami-033b95fb8079dc481"
+#   instance_type               = "t2.micro"
+#   subnet_id                   = module.vpc.public_subnets[0]
+#   associate_public_ip_address = true
+#   vpc_security_group_ids      = [aws_security_group.bastion.id]
+#   key_name                    = aws_key_pair.a4l.key_name
 
-  tags = {
-    Name = "A4L-BASTION"
-  }
-}
+#   tags = {
+#     Name = "A4L-BASTION"
+#   }
+# }
 
-# trunk-ignore(trivy)
-# trunk-ignore(checkov)
-resource "aws_instance" "a4l_internal" {
-  ami                    = "ami-033b95fb8079dc481"
-  instance_type          = "t2.micro"
-  subnet_id              = module.vpc.private_subnets[1]
-  vpc_security_group_ids = [aws_security_group.internal.id]
-  key_name               = aws_key_pair.a4l.key_name
+# # trunk-ignore(trivy)
+# # trunk-ignore(checkov)
+# resource "aws_instance" "a4l_internal" {
+#   ami                    = "ami-033b95fb8079dc481"
+#   instance_type          = "t2.micro"
+#   subnet_id              = module.vpc.private_subnets[1]
+#   vpc_security_group_ids = [aws_security_group.internal.id]
+#   key_name               = aws_key_pair.a4l.key_name
 
-  tags = {
-    Name = "A4L-INTERNAL-TEST"
-  }
-}
+#   tags = {
+#     Name = "A4L-INTERNAL-TEST"
+#   }
+# }
