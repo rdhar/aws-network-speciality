@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.3](https://github.com/3ware/aws-network-speciality/compare/v1.5.2...v1.5.3) (2024-09-19)
+
+
+### Bug Fixes
+
+* **vpc:** Add correctly formatted SSH key ([#36](https://github.com/3ware/aws-network-speciality/issues/36)) ([a3130f8](https://github.com/3ware/aws-network-speciality/commit/a3130f89ecf46ec3ac0fb499f146859bdd719c5a))
+
 ## [1.5.2](https://github.com/3ware/aws-network-speciality/compare/v1.5.1...v1.5.2) (2024-09-10)
 
 
