@@ -42,6 +42,8 @@ jobs:
           matrix: true
 
   trunk-check-tf:
+    # This job should only run in pull requests
+    if: github.event_name == 'pull_request'
     name: Trunk Check TF
     needs: [find-terraform]
     runs-on: ubuntu-latest
@@ -102,6 +104,12 @@ jobs:
   plan-and-apply-dev:
     name: Open Tofu CI Development
     needs: [find-terraform, trunk-check-tf]
+    # This job should run if trunk check succeeds in pull requests or is skipped on pushes
+    # always is required so this job isn't skipped when trunk check is skipped
+    if: |
+      always() &&
+      github.event_name == 'pull_request' && needs.trunk-check-tf.result == 'success' ||
+      github.event_name == 'push' && needs.trunk-check-tf.result == 'skipped'
     runs-on: ubuntu-latest
     permissions:
       actions: read # Required to download repository artifact.
