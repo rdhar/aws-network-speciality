@@ -1,6 +1,3 @@
-# locals {
-#   admin_port = 22
-# }
 # trunk-ignore(trivy/AVD-AWS-0178): Flow log not required as demo vpc
 module "vpc" {
   source = "git::https://github.com/terraform-aws-modules/terraform-aws-vpc.git?ref=e226cc15a7b8f62fd0e108792fea66fa85bcb4b9"
@@ -14,13 +11,13 @@ module "vpc" {
   private_subnets  = ["10.16.32.0/20", "10.16.96.0/20", "10.16.160.0/20"]
   database_subnets = ["10.16.16.0/20", "10.16.80.0/20", "10.16.144.0/20"]
 
-  enable_ipv6                                     = true
-  public_subnet_assign_ipv6_address_on_creation   = true
-  private_subnet_assign_ipv6_address_on_creation  = true
-  database_subnet_assign_ipv6_address_on_creation = true
-  public_subnet_ipv6_prefixes                     = [3, 7, 11]
-  private_subnet_ipv6_prefixes                    = [2, 6, 10] #! 0A Hex to 10 Decimal
-  database_subnet_ipv6_prefixes                   = [1, 5, 9]
+  enable_ipv6                                     = false
+  public_subnet_assign_ipv6_address_on_creation   = false
+  private_subnet_assign_ipv6_address_on_creation  = false
+  database_subnet_assign_ipv6_address_on_creation = false
+  # public_subnet_ipv6_prefixes                     = [3, 7, 11]
+  # private_subnet_ipv6_prefixes                    = [2, 6, 10] #! 0A Hex to 10 Decimal
+  # database_subnet_ipv6_prefixes                   = [1, 5, 9]
 
   create_igw             = true
   create_egress_only_igw = false
@@ -32,10 +29,14 @@ module "vpc" {
   enable_dns_support   = true
 }
 
-# Use for_each to create security group rules to avoid creation of duplicate rules
-# If 2 CIDRs are supplied, the provider creates 2 rules as you can only have 1 CIDR per rule
-# Any CRUD operations where a CIDR is changed could fail because of duplicate values
-# It is simpler to create 1 rule resource per CIDR block using for_each
+# locals {
+#   admin_port = 22
+# }
+
+# # Use for_each to create security group rules to avoid creation of duplicate rules
+# # If 2 CIDRs are supplied, the provider creates 2 rules as you can only have 1 CIDR per rule
+# # Any CRUD operations where a CIDR is changed could fail because of duplicate values
+# # It is simpler to create 1 rule resource per CIDR block using for_each
 # resource "aws_security_group_rule" "bastion_ingress" {
 #   for_each          = var.trusted_ips
 #   description       = "Inbound traffic to bastion hosts"

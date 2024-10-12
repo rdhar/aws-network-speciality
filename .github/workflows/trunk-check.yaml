@@ -26,6 +26,6 @@ jobs:
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Trunk Check
-        uses: trunk-io/trunk-action@a19f8a0d6676d8ef1e60bda132f3fbab23cc2aa5
+        uses: trunk-io/trunk-action@2eaee169140ec559bd556208f9f99cdfdf468da8
         with:
           arguments: --filter -tflint,-tofu

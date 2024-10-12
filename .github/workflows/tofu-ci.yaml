@@ -6,11 +6,11 @@ on:
     paths:
       - tf/dev/**/*.tf
       - tf/dev/**/*.tfvars
-  push:
-    branches: [main]
-    paths:
-      - tf/dev/**/*.tf
-      - tf/dev/**/*.tfvars
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - tf/dev/**/*.tf
+  #     - tf/dev/**/*.tfvars
 
 # Disable permissions for all available scopes.
 permissions: {}
@@ -59,8 +59,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
-        # AWS Credentials required for tflint deep check
-        #TODO: Try running with an ACCESS key with act
+      # AWS Credentials required for tflint deep check
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
         with:
@@ -72,8 +71,8 @@ jobs:
       - name: Cache TFLint plugin directory
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
-          path: $GITHUB_WORKSPACE/.trunk/plugins/
-          key: ${{ runner.os }}-3ware-ans-tflint-${{ hashFiles('$GITHUB_WORKSPACE/.trunk/configs/.tflint.hcl') }}
+          path: .trunk/plugins/
+          key: ${{ runner.os }}-3ware-ans-tflint-${{ hashFiles('.trunk/configs/.tflint.hcl') }}
 
       # Install OpenTofu; required to initialise working directory
       - name: Setup OpenTofu
@@ -99,7 +98,7 @@ jobs:
 
       # Run Trunk Check
       - name: Trunk Check
-        uses: trunk-io/trunk-action@a19f8a0d6676d8ef1e60bda132f3fbab23cc2aa5
+        uses: trunk-io/trunk-action@2eaee169140ec559bd556208f9f99cdfdf468da8
 
   plan-and-apply-dev:
     name: Open Tofu CI Development
@@ -126,7 +125,7 @@ jobs:
       TF_TOKEN_APP_TERRAFORM_IO: ${{ secrets.TF_TOKEN_APP_TERRAFORM_IO }}
 
     # Set environment for push events only.
-    environment: ${{ github.event_name == 'push' && 'development' || '' }}
+    # environment: ${{ github.event_name == 'pull_request' && 'development' || '' }}
 
     steps:
       - name: Checkout repository
@@ -145,18 +144,30 @@ jobs:
           tofu_version: 1.8.2
           tofu_wrapper: true
 
-      - name: Provision infrastructure
-        uses: devsectop/tf-via-pr@86ff2b5756fb1c483c7c3ecc86f7c320c97a7302 # v11.4.1
+      - name: Plan
+        uses: devsectop/tf-via-pr@cc83c7bae8216e747bb8c074524665b2416822f5 # v11.4.6
         with:
           arg_chdir: ${{ matrix.terraform-dir }}
-          arg_command: ${{ github.event_name == 'push' && 'apply' || 'plan' }}
-          arg_lock: ${{ github.event_name == 'push' && 'true' || 'false' }}
+          arg_command: plan
+          # arg_command: ${{ github.event_name == 'push' && 'apply' || 'plan' }}
+          arg_lock: false
+          # arg_lock: ${{ github.event_name == 'push' && 'true' || 'false' }}
+
+      - name: Apply
+        uses: devsectop/tf-via-pr@cc83c7bae8216e747bb8c074524665b2416822f5 # v11.4.6
+        with:
+          arg_chdir: ${{ matrix.terraform-dir }}
+          arg_command: apply
+          arg_auto_approve: true
+          # arg_command: ${{ github.event_name == 'push' && 'apply' || 'plan' }}
+          arg_lock: true
+          # arg_lock: ${{ github.event_name == 'push' && 'true' || 'false' }}
 
       # This plan should not produce a diff
       - name: Check idempotency
         id: idempotency
-        if: github.event_name == 'push'
-        uses: devsectop/tf-via-pr@86ff2b5756fb1c483c7c3ecc86f7c320c97a7302 # v11.4.1
+        # if: github.event_name == 'push'
+        uses: devsectop/tf-via-pr@cc83c7bae8216e747bb8c074524665b2416822f5 # v11.4.6
         with:
           arg_chdir: ${{ matrix.terraform-dir }}
           arg_command: plan
@@ -168,20 +179,19 @@ jobs:
       #TODO: Create issue on failure here
       # - name: Create diff issue
 
-      - name: Exit if idempotent
-        if: github.event_name == 'push' && steps.idempotency.outputs.exitcode != 0
-        shell: bash
-        run: exit ${{ steps.idempotency.outputs.exitcode }}
+      # - name: Exit if idempotent
+      #   if: github.event_name == 'push' && steps.idempotency.outputs.exitcode != 0
+      #   shell: bash
+      #   run: exit ${{ steps.idempotency.outputs.exitcode }}
 
-      - name: Clean up resources
-        if: github.event_name == 'push'
-        uses: devsectop/tf-via-pr@86ff2b5756fb1c483c7c3ecc86f7c320c97a7302 # v11.4.1
+      - name: Destroy
+        uses: devsectop/tf-via-pr@cc83c7bae8216e747bb8c074524665b2416822f5 # v11.4.6
         with:
           arg_chdir: ${{ matrix.terraform-dir }}
           arg_command: apply
           arg_destroy: true
-          arg_lock: true
           arg_auto_approve: true
+          arg_lock: true
 
       # TODO: Terraform docs
 
