@@ -2,10 +2,10 @@ name: Checks
 
 on:
   pull_request:
-    {}
-    #types: [opened, edited, synchronize]
-    #branches: [main]
-  merge_group: {}
+    types: [opened, edited, synchronize]
+    branches: [main]
+  merge_group:
+    types: [checks_requested]
 
 # Disable permissions for all available scopes
 permissions: {}

@@ -1,0 +1,61 @@
+name: Trigger on pull_request (plan) and merge_group (apply) in matrix strategy.
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - "**/*.tf"
+      - "**/*.tfvars"
+    branches: [main]
+  merge_group:
+    types: [checks_requested]
+
+permissions: {}
+
+jobs:
+  tf:
+    runs-on: ubuntu-latest
+
+    permissions:
+      actions: read # Required to identify workflow run.
+      checks: write # Required to add status summary.
+      contents: read # Required to checkout repository.
+      id-token: write # Require for OIDC.
+      pull-requests: write # Required to add comment and label.
+
+    strategy:
+      fail-fast: true
+      max-parallel: 1
+      matrix:
+        environment: [development, production]
+    env:
+      TF_TOKEN_APP_TERRAFORM_IO: ${{ secrets.TF_TOKEN_APP_TERRAFORM_IO }}
+
+    # environment: ${{ github.event_name == 'merge_group' && matrix.deployment || '' }}
+    # Changing this because the secrets are set at environment level, and the OIDC role only allows access from the environment
+    environment: ${{ matrix.environment }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: View context attributes
+        uses: actions/github-script@v7
+        with:
+          script: console.log(context)
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          aws-region: us-east-1
+          mask-aws-account-id: true
+          role-to-assume: ${{ secrets[format('GHA_3WARE_OIDC_{0}', matrix.environment)] }}
+          role-session-name: ans-vpc-${{ matrix.environment }}
+
+      - name: Provision TF
+        uses: devsectop/tf-via-pr@v12
+        with:
+          command: ${{ github.event_name == 'merge_group' && 'apply' || 'plan' }}
+          arg-lock: ${{ github.event_name == 'merge_group' }}
+          working-directory: terraform/${{ matrix.environment }}/vpc
+          plan-encrypt: ${{ secrets.PGP_SECRET_SIGNING_PASSPHRASE }}
