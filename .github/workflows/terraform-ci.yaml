@@ -1,0 +1,208 @@
+name: Terraform CI
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - "**/*.tf"
+      - "**/*.tfvars"
+    branches: [main]
+  merge_group:
+    types: [checks_requested]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.repository }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  test-terraform:
+    # This job should only run in pull requests
+    if: ${{ github.event_name == 'pull_request' }}
+    name: Test Terraform
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read # Required to identify workflow run.
+      checks: write # Required to add status summary.
+      contents: read # Required to checkout repository.
+      id-token: write # Require for OIDC.
+      pull-requests: write # Required to add comment and label.
+    strategy:
+      matrix:
+        environment: ${{ fromJson(vars.ENVIRONMENTS) }}
+    environment: ${{ matrix.environment }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      # AWS Credentials required for tflint deep check
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          aws-region: us-east-1
+          mask-aws-account-id: true
+          role-to-assume: ${{ secrets[format('GHA_3WARE_OIDC_{0}', matrix.environment)] }}
+          role-session-name: tflint-deep-check-${{ matrix.environment }}
+
+      - name: Cache TFLint plugin directory
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: .trunk/plugins/
+          key: ${{ runner.os }}-${{ github.repository }}-tflint-${{ hashFiles('.trunk/configs/.tflint_ci.hcl') }}
+
+      # Run terraform format
+      - name: Terraform fmt
+        id: tf-fmt
+        run: terraform -chdir=terraform/${{ matrix.environment }}/vpc fmt -check
+        continue-on-error: true
+
+      # Initialise terraform in the directory where terraform file have changed.
+      - name: Initialise terraform
+        id: tf-init
+        run: |
+          terraform -chdir=terraform/${{ matrix.environment }}/vpc init -backend=false
+
+      # Run terraform validate
+      - name: Terraform validate
+        id: tf-validate
+        run: terraform -chdir=terraform/${{ matrix.environment }}/vpc validate -no-color
+        continue-on-error: true
+
+      # Add PR comment with formatting and validation errors
+      - name: Add PR comment on terraform failure
+        if: ${{ steps.tf-fmt.outputs.exitcode != 0 || steps.tf-validate.outputs.exitcode != 0 }}
+        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # v2.9.0
+        with:
+          header: test
+          hide_and_recreate: true
+          message: |
+            #### ${{ matrix.environment }}
+
+            #### :x: Terraform Format and Style ${{ steps.tf-fmt.outcome }}
+
+            ${{ steps.tf-fmt.outputs.stdout }}
+
+            #### :x: Terraform Validation ${{ steps.tf-validate.outcome }}
+
+            ```
+            ${{ steps.tf-validate.outputs.stderr }}
+            ```
+
+            Resolve these issues and commit your changes to trigger another deployment.
+
+      # Exit this workflow if fmt or validate fail
+      - name: Terraform error
+        if: ${{ steps.tf-fmt.outputs.exitcode != 0 || steps.tf-validate.outputs.exitcode != 0 }}
+        run: |
+          exit 1
+
+      # Install TFLint; required to download plugins
+      - name: Install TFLint
+        uses: terraform-linters/setup-tflint@15ef44638cb215296e7ba9e7a41f20b5b06f4784 # v4.0.0
+        with:
+          tflint_version: v0.53.0
+          tflint_wrapper: true
+
+      # Initialise TFLint using the configuration file in the trunk directory
+      - name: Initialise TFLint
+        shell: bash
+        run: |
+          tflint -chdir=terraform/${{ matrix.environment }}/vpc --init --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl
+
+      - name: Run TFLint
+        id: tflint
+        run: |
+          tflint --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl --format compact
+        continue-on-error: true
+
+      # Add PR comment when TFLint detects a violation
+      - name: Add PR comment on TFLint failure
+        if: ${{ steps.tflint.outputs.exitcode != 0 }}
+        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # v2.9.0
+        with:
+          header: test
+          hide_and_recreate: true
+          message: |
+            #### ${{ matrix.environment }}
+
+            #### :x: TFLint failure
+
+            ```
+            ${{ steps.tflint.outputs.stdout }}
+            ```
+
+            Resolve these issues and commit your changes to trigger another deployment.
+
+      # Exit workflow if TFLint detects a violation
+      - name: TFLint error
+        if: ${{ steps.tflint.outputs.exitcode != 0 }}
+        run: |
+          exit 1
+
+      # Run Trunk Check without terraform and tflint due to deep check issue
+      - name: Trunk Check
+        uses: trunk-io/trunk-action@2eaee169140ec559bd556208f9f99cdfdf468da8 # v1.1.17
+        with:
+          arguments: --filter checkov,trivy
+
+      - name: Update PR comment for Test success
+        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # v2.9.0
+        with:
+          header: test
+          hide_and_recreate: true
+          message: |
+            #### ${{ matrix.environment }}
+
+            #### :white_check_mark: Terraform Format and Style ${{ steps.tf-fmt.outcome }}
+            #### :white_check_mark: Terraform Validation ${{ steps.tf-validate.outcome }}
+            #### :white_check_mark: TFLint ${{ steps.tf-validate.outcome }}
+
+  plan-and-apply:
+    name: Terraform Deploy
+    runs-on: ubuntu-latest
+    needs: [test-terraform]
+    # This job should run `terraform plan` following the successful completion of trunk-check-tf
+    # `terraform apply` is triggered when the PR is merged. trunk-check-tf does not run on merge,
+    # so this job should run when test-terraform is skipped
+    if: |
+      always() &&
+      github.event_name == 'pull_request' && needs.test-terraform.result == 'success' ||
+      github.event_name == 'merge_group' && needs.test-terraform.result == 'skipped'
+    permissions:
+      actions: read # Required to identify workflow run.
+      checks: write # Required to add status summary.
+      contents: read # Required to checkout repository.
+      id-token: write # Require for OIDC.
+      pull-requests: write # Required to add comment and label.
+    strategy:
+      fail-fast: true
+      max-parallel: 1
+      matrix:
+        environment: ${{ fromJson(vars.ENVIRONMENTS) }}
+    env:
+      TF_TOKEN_APP_TERRAFORM_IO: ${{ secrets.TF_TOKEN_APP_TERRAFORM_IO }}
+    environment: ${{ matrix.environment }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          aws-region: us-east-1
+          mask-aws-account-id: true
+          role-to-assume: ${{ secrets[format('GHA_3WARE_OIDC_{0}', matrix.environment)] }}
+          role-session-name: aws-net-sec-${{ matrix.environment }}-terraform-deploy
+
+      - name: Provision TF
+        uses: devsectop/tf-via-pr@f1acaae1d94826457fa57bc65f1df318fd81b3bc # v12.0.0
+        with:
+          command: ${{ github.event_name == 'merge_group' && 'apply' || 'plan' }}
+          arg-lock: ${{ github.event_name == 'merge_group' }}
+          working-directory: terraform/${{ matrix.environment }}/vpc
+          plan-encrypt: ${{ secrets.PGP_SECRET_SIGNING_PASSPHRASE }}
