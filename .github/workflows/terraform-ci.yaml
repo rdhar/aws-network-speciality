@@ -6,6 +6,7 @@ on:
     paths:
       - "**/*.tf"
       - "**/*.tfvars"
+      - "**/*.tftpl"
     branches: [main]
   merge_group:
     types: [checks_requested]
@@ -21,10 +22,8 @@ defaults:
     shell: bash
 
 jobs:
-  test-terraform:
-    # This job should only run in pull requests
-    if: ${{ github.event_name == 'pull_request' }}
-    name: Test Terraform
+  terraform-ci:
+    name: Terraform CI
     runs-on: ubuntu-latest
     permissions:
       actions: read # Required to identify workflow run.
@@ -33,9 +32,13 @@ jobs:
       id-token: write # Require for OIDC.
       pull-requests: write # Required to add comment and label.
     strategy:
+      fail-fast: true
+      max-parallel: 1
       matrix:
         environment: ${{ fromJson(vars.ENVIRONMENTS) }}
     environment: ${{ matrix.environment }}
+    env:
+      TF_TOKEN_APP_TERRAFORM_IO: ${{ secrets.TF_TOKEN_APP_TERRAFORM_IO }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -47,9 +50,10 @@ jobs:
           aws-region: us-east-1
           mask-aws-account-id: true
           role-to-assume: ${{ secrets[format('GHA_3WARE_OIDC_{0}', matrix.environment)] }}
-          role-session-name: tflint-deep-check-${{ matrix.environment }}
+          role-session-name: ${{ github.event_name == 'merge_group' && 'aws-net-sec-terraform-apply' || 'aws-net-sec-terraform-plan' }}
 
       - name: Cache TFLint plugin directory
+        if: ${{ github.event_name == 'pull_request' }}
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: .trunk/plugins/
@@ -57,18 +61,21 @@ jobs:
 
       # Run terraform format
       - name: Terraform fmt
+        if: ${{ github.event_name == 'pull_request' }}
         id: tf-fmt
         run: terraform -chdir=terraform/${{ matrix.environment }}/vpc fmt -check
         continue-on-error: true
 
       # Initialise terraform in the directory where terraform file have changed.
       - name: Initialise terraform
+        if: ${{ github.event_name == 'pull_request' }}
         id: tf-init
         run: |
           terraform -chdir=terraform/${{ matrix.environment }}/vpc init -backend=false
 
       # Run terraform validate
       - name: Terraform validate
+        if: ${{ github.event_name == 'pull_request' }}
         id: tf-validate
         run: terraform -chdir=terraform/${{ matrix.environment }}/vpc validate -no-color
         continue-on-error: true
@@ -103,6 +110,7 @@ jobs:
 
       # Install TFLint; required to download plugins
       - name: Install TFLint
+        if: ${{ github.event_name == 'pull_request' }}
         uses: terraform-linters/setup-tflint@15ef44638cb215296e7ba9e7a41f20b5b06f4784 # v4.0.0
         with:
           tflint_version: v0.53.0
@@ -110,14 +118,16 @@ jobs:
 
       # Initialise TFLint using the configuration file in the trunk directory
       - name: Initialise TFLint
+        if: ${{ github.event_name == 'pull_request' }}
         shell: bash
         run: |
           tflint -chdir=terraform/${{ matrix.environment }}/vpc --init --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl
 
       - name: Run TFLint
+        if: ${{ github.event_name == 'pull_request' }}
         id: tflint
         run: |
-          tflint --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl --format compact
+          tflint -chdir=terraform/${{ matrix.environment }}/vpc --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl --format compact
         continue-on-error: true
 
       # Add PR comment when TFLint detects a violation
@@ -146,11 +156,13 @@ jobs:
 
       # Run Trunk Check without terraform and tflint due to deep check issue
       - name: Trunk Check
+        if: ${{ github.event_name == 'pull_request' }}
         uses: trunk-io/trunk-action@2eaee169140ec559bd556208f9f99cdfdf468da8 # v1.1.17
         with:
           arguments: --filter checkov,trivy
 
       - name: Update PR comment for Test success
+        if: ${{ github.event_name == 'pull_request' }}
         uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # v2.9.0
         with:
           header: test
@@ -162,43 +174,6 @@ jobs:
             #### :white_check_mark: Terraform Validation ${{ steps.tf-validate.outcome }}
             #### :white_check_mark: TFLint ${{ steps.tf-validate.outcome }}
 
-  plan-and-apply:
-    name: Terraform Deploy
-    runs-on: ubuntu-latest
-    needs: [test-terraform]
-    # This job should run `terraform plan` following the successful completion of trunk-check-tf
-    # `terraform apply` is triggered when the PR is merged. trunk-check-tf does not run on merge,
-    # so this job should run when test-terraform is skipped
-    if: |
-      always() &&
-      github.event_name == 'pull_request' && needs.test-terraform.result == 'success' ||
-      github.event_name == 'merge_group' && needs.test-terraform.result == 'skipped'
-    permissions:
-      actions: read # Required to identify workflow run.
-      checks: write # Required to add status summary.
-      contents: read # Required to checkout repository.
-      id-token: write # Require for OIDC.
-      pull-requests: write # Required to add comment and label.
-    strategy:
-      fail-fast: true
-      max-parallel: 1
-      matrix:
-        environment: ${{ fromJson(vars.ENVIRONMENTS) }}
-    env:
-      TF_TOKEN_APP_TERRAFORM_IO: ${{ secrets.TF_TOKEN_APP_TERRAFORM_IO }}
-    environment: ${{ matrix.environment }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-
-      - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
-        with:
-          aws-region: us-east-1
-          mask-aws-account-id: true
-          role-to-assume: ${{ secrets[format('GHA_3WARE_OIDC_{0}', matrix.environment)] }}
-          role-session-name: aws-net-sec-${{ matrix.environment }}-terraform-deploy
-
       - name: Provision TF
         uses: devsectop/tf-via-pr@f1acaae1d94826457fa57bc65f1df318fd81b3bc # v12.0.0
         with:
@@ -206,3 +181,4 @@ jobs:
           arg-lock: ${{ github.event_name == 'merge_group' }}
           working-directory: terraform/${{ matrix.environment }}/vpc
           plan-encrypt: ${{ secrets.PGP_SECRET_SIGNING_PASSPHRASE }}
+          comment-pr: recreate
