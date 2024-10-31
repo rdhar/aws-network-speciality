@@ -3,10 +3,10 @@ name: Terraform CI
 on:
   pull_request:
     types: [opened, synchronize]
-    paths:
-      - "**/*.tf"
-      - "**/*.tfvars"
-      - "**/*.tftpl"
+    # paths:
+    #   - "**/*.tf"
+    #   - "**/*.tfvars"
+    #   - "**/*.tftpl"
     branches: [main]
   merge_group:
     types: [checks_requested]
@@ -22,7 +22,40 @@ defaults:
     shell: bash
 
 jobs:
+  targets:
+    name: Targets
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      targets: ${{ steps.directories.outputs.all_changed_files }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check changed directories
+        id: directories
+        uses: tj-actions/changed-files@c3a1bb2c992d77180ae65be6ae6c166cf40f857c # v45.0.3
+        with:
+          dir_names: true
+          dir_names_max_depth: 2
+          files: terraform/**
+          matrix: true
+
+      - name: Output Environment
+        id: environment
+        env:
+          ALL_CHANGED_FILES: ${{ steps.directories.outputs.all_changed_files }}
+        run: |
+          for file in ${ALL_CHANGED_FILES}; do
+            echo "$file was changed"
+          done
+
   terraform-ci:
+    needs: [targets]
+    if: ${{ needs.targets.outputs.targets != '[]' }}
     name: Terraform CI
     runs-on: ubuntu-latest
     permissions:
@@ -35,8 +68,8 @@ jobs:
       fail-fast: true
       max-parallel: 1
       matrix:
-        environment: ${{ fromJson(vars.ENVIRONMENTS) }}
-    environment: ${{ matrix.environment }}
+        targets: ${{ fromJson(needs.targets.outputs.targets) }}
+    #environment: ${{ matrix.environment }}
     env:
       TF_TOKEN_APP_TERRAFORM_IO: ${{ secrets.TF_TOKEN_APP_TERRAFORM_IO }}
     steps:
@@ -49,7 +82,7 @@ jobs:
         with:
           aws-region: us-east-1
           mask-aws-account-id: true
-          role-to-assume: ${{ secrets[format('GHA_3WARE_OIDC_{0}', matrix.environment)] }}
+          #role-to-assume: ${{ secrets[format('GHA_3WARE_OIDC_{0}', matrix.environment)] }}
           role-session-name: ${{ github.event_name == 'merge_group' && 'aws-net-sec-terraform-apply' || 'aws-net-sec-terraform-plan' }}
 
       - name: Cache TFLint plugin directory
@@ -63,7 +96,7 @@ jobs:
       - name: Terraform fmt
         if: ${{ github.event_name == 'pull_request' }}
         id: tf-fmt
-        run: terraform -chdir=terraform/${{ matrix.environment }}/vpc fmt -check
+        run: terraform -chdir=terraform/${{ matrix.targets }}/vpc fmt -check
         continue-on-error: true
 
       # Initialise terraform in the directory where terraform file have changed.
@@ -71,13 +104,13 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         id: tf-init
         run: |
-          terraform -chdir=terraform/${{ matrix.environment }}/vpc init -backend=false
+          terraform -chdir=terraform/${{ matrix.targets }}/vpc init -backend=false
 
       # Run terraform validate
       - name: Terraform validate
         if: ${{ github.event_name == 'pull_request' }}
         id: tf-validate
-        run: terraform -chdir=terraform/${{ matrix.environment }}/vpc validate -no-color
+        run: terraform -chdir=terraform/${{ matrix.targets }}/vpc validate -no-color
         continue-on-error: true
 
       # Add PR comment with formatting and validation errors
@@ -88,7 +121,7 @@ jobs:
           header: test
           hide_and_recreate: true
           message: |
-            #### ${{ matrix.environment }}
+            #### ${{ matrix.targets }}
 
             #### :x: Terraform Format and Style ${{ steps.tf-fmt.outcome }}
 
@@ -121,13 +154,13 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         shell: bash
         run: |
-          tflint -chdir=terraform/${{ matrix.environment }}/vpc --init --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl
+          tflint -chdir=terraform/${{ matrix.targets }}/vpc --init --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl
 
       - name: Run TFLint
         if: ${{ github.event_name == 'pull_request' }}
         id: tflint
         run: |
-          tflint -chdir=terraform/${{ matrix.environment }}/vpc --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl --format compact
+          tflint -chdir=terraform/${{ matrix.targets }}/vpc --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl --format compact
         continue-on-error: true
 
       # Add PR comment when TFLint detects a violation
@@ -138,7 +171,7 @@ jobs:
           header: test
           hide_and_recreate: true
           message: |
-            #### ${{ matrix.environment }}
+            #### ${{ matrix.targets }}
 
             #### :x: TFLint failure
 
@@ -168,7 +201,7 @@ jobs:
           header: test
           hide_and_recreate: true
           message: |
-            #### ${{ matrix.environment }}
+            #### ${{ matrix.targets }}
 
             #### :white_check_mark: Terraform Format and Style ${{ steps.tf-fmt.outcome }}
             #### :white_check_mark: Terraform Validation ${{ steps.tf-validate.outcome }}
@@ -179,6 +212,6 @@ jobs:
         with:
           command: ${{ github.event_name == 'merge_group' && 'apply' || 'plan' }}
           arg-lock: ${{ github.event_name == 'merge_group' }}
-          working-directory: terraform/${{ matrix.environment }}/vpc
+          working-directory: ${{ matrix.targets }}
           plan-encrypt: ${{ secrets.PGP_SECRET_SIGNING_PASSPHRASE }}
           comment-pr: recreate

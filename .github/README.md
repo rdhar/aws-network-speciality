@@ -11,7 +11,7 @@ Repository to store terraform code used while studying for the ANS-C01 exam. I a
 - :white_check_mark: CloudFront - but see open [issue](https://github.com/3ware/aws-network-speciality/issues/8)
 - :white_check_mark: VPC Peering :rocket:
 
-## Workflow
+## Workflow - this section is WIP
 
 ### Linting
 
@@ -19,9 +19,9 @@ We use [trunk.io's](https://trunk.io) code quality function for formatting and l
 
 ### Pipeline
 
-#### Find TF files
+~~#### Find TF files~~
 
-The first job of the [tofu-ci](.workflows/tofu-ci.yaml) workflow is to look for tf and tfvars files that have changed in the dev folder. The output from this job is used to define the matrix strategy for remaining jobs. A matrix strategy is used in case tf files have changed in different directories. Each job will run in a separate directory for `init`, `plan` and `apply`.
+~~The first job of the [tofu-ci](.workflows/tofu-ci.yaml) workflow is to look for tf and tfvars files that have changed in the dev folder. The output from this job is used to define the matrix strategy for remaining jobs. A matrix strategy is used in case tf files have changed in different directories. Each job will run in a separate directory for `init`, `plan` and `apply`.~~
 
 #### Trunk Check TF
 
@@ -29,14 +29,4 @@ Trunk linting also runs in CI. [Trunk's GitHub Integration](https://docs.trunk.i
 
 This job only runs on pull requests prior to running a plan.
 
-#### Plan and Apply Dev
-
-The plan and apply job will run `plan` in a pull request on successful completion of the trunk check job. The plan action takes place outside the GitHub development environment because a successful plan will show a successful deployment. A successful deployment should only occur following a successful apply.
-
-Once a PR is merged, the pipeline will run again, skipping trunk-check-tf and running an `apply` in the GitHub development environment. Post apply, another `plan` is run as a final check for idempotence.
-
-- [ ] Destroy step to check for dependencies. Step not working.
-- [ ] If idempotence check fails, an issue should be raised.
-- [ ] If idempotence check fails, skip the destroy?
-- [ ] Final job is to raise a PR for prod
-  - Folders or workspaces?
+#### Plan and Apply
