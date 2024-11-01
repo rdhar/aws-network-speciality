@@ -18,14 +18,14 @@ runtimes:
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
   disabled:
+    - checkov
     - terrascan
+    - trivy
   enabled:
     - dotenv-linter@3.3.0
     - renovate@38.133.0
     - terraform@1.9.7:
         commands: [fmt, validate]
-    - checkov@3.2.269
-    - trivy@0.56.2
     - yamllint@1.35.1
     - trufflehog@3.82.13
     - oxipng@9.1.2

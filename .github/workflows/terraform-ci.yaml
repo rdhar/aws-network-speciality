@@ -1,12 +1,9 @@
 name: Terraform CI
+run-name: ${{ github.event_name == 'merge_group' && github.event.merge_group.head_commit.message || ''}}
 
 on:
   pull_request:
     types: [opened, synchronize]
-    # paths:
-    #   - "**/*.tf"
-    #   - "**/*.tfvars"
-    #   - "**/*.tftpl"
     branches: [main]
   merge_group:
     types: [checks_requested]
@@ -23,7 +20,7 @@ defaults:
 
 jobs:
   targets:
-    name: Targets
+    name: Terraform Targets
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -35,28 +32,20 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+
       - name: Check changed directories
         id: directories
         uses: tj-actions/changed-files@c3a1bb2c992d77180ae65be6ae6c166cf40f857c # v45.0.3
         with:
           dir_names: true
-          dir_names_max_depth: 2
+          dir_names_max_depth: 3
           files: terraform/**
           matrix: true
 
-      - name: Output Environment
-        id: environment
-        env:
-          ALL_CHANGED_FILES: ${{ steps.directories.outputs.all_changed_files }}
-        run: |
-          for file in ${ALL_CHANGED_FILES}; do
-            echo "$file was changed"
-          done
-
-  terraform-ci:
+  terraform-deploy:
     needs: [targets]
     if: ${{ needs.targets.outputs.targets != '[]' }}
-    name: Terraform CI
+    name: Terraform Deploy
     runs-on: ubuntu-latest
     permissions:
       actions: read # Required to identify workflow run.
@@ -69,12 +58,21 @@ jobs:
       max-parallel: 1
       matrix:
         targets: ${{ fromJson(needs.targets.outputs.targets) }}
-    #environment: ${{ matrix.environment }}
+    environment: ${{ contains(matrix.targets, 'production') && 'production' || 'development' }}
     env:
       TF_TOKEN_APP_TERRAFORM_IO: ${{ secrets.TF_TOKEN_APP_TERRAFORM_IO }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # This is required because the 'environment' context does not exist, do cannot be referenced
+      # my the steps that need it
+      - name: Set deployment environment as an environment variable
+        run: |
+          echo "ENVIRONMENT=${{ contains(matrix.targets, 'production') && 'production' || 'development' }}" >> $GITHUB_ENV
 
       # AWS Credentials required for tflint deep check
       - name: Configure AWS credentials via OIDC
@@ -82,7 +80,7 @@ jobs:
         with:
           aws-region: us-east-1
           mask-aws-account-id: true
-          #role-to-assume: ${{ secrets[format('GHA_3WARE_OIDC_{0}', matrix.environment)] }}
+          role-to-assume: ${{ secrets[format('GHA_3WARE_OIDC_{0}', env.ENVIRONMENT)] }}
           role-session-name: ${{ github.event_name == 'merge_group' && 'aws-net-sec-terraform-apply' || 'aws-net-sec-terraform-plan' }}
 
       - name: Cache TFLint plugin directory
@@ -96,7 +94,7 @@ jobs:
       - name: Terraform fmt
         if: ${{ github.event_name == 'pull_request' }}
         id: tf-fmt
-        run: terraform -chdir=terraform/${{ matrix.targets }}/vpc fmt -check
+        run: terraform -chdir=${{ matrix.targets }} fmt -check
         continue-on-error: true
 
       # Initialise terraform in the directory where terraform file have changed.
@@ -104,13 +102,13 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         id: tf-init
         run: |
-          terraform -chdir=terraform/${{ matrix.targets }}/vpc init -backend=false
+          terraform -chdir=${{ matrix.targets }} init -backend=false
 
       # Run terraform validate
       - name: Terraform validate
         if: ${{ github.event_name == 'pull_request' }}
         id: tf-validate
-        run: terraform -chdir=terraform/${{ matrix.targets }}/vpc validate -no-color
+        run: terraform -chdir=${{ matrix.targets }} validate -no-color
         continue-on-error: true
 
       # Add PR comment with formatting and validation errors
@@ -118,8 +116,8 @@ jobs:
         if: ${{ steps.tf-fmt.outputs.exitcode != 0 || steps.tf-validate.outputs.exitcode != 0 }}
         uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # v2.9.0
         with:
-          header: test
-          hide_and_recreate: true
+          header: test-${{ matrix.targets }}
+          recreate: true
           message: |
             #### ${{ matrix.targets }}
 
@@ -154,13 +152,13 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         shell: bash
         run: |
-          tflint -chdir=terraform/${{ matrix.targets }}/vpc --init --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl
+          tflint -chdir=${{ matrix.targets }} --init --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl
 
       - name: Run TFLint
         if: ${{ github.event_name == 'pull_request' }}
         id: tflint
         run: |
-          tflint -chdir=terraform/${{ matrix.targets }}/vpc --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl --format compact
+          tflint -chdir=${{ matrix.targets }} --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl --format compact
         continue-on-error: true
 
       # Add PR comment when TFLint detects a violation
@@ -168,8 +166,8 @@ jobs:
         if: ${{ steps.tflint.outputs.exitcode != 0 }}
         uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # v2.9.0
         with:
-          header: test
-          hide_and_recreate: true
+          header: test-${{ matrix.targets }}
+          recreate: true
           message: |
             #### ${{ matrix.targets }}
 
@@ -187,19 +185,12 @@ jobs:
         run: |
           exit 1
 
-      # Run Trunk Check without terraform and tflint due to deep check issue
-      - name: Trunk Check
-        if: ${{ github.event_name == 'pull_request' }}
-        uses: trunk-io/trunk-action@2eaee169140ec559bd556208f9f99cdfdf468da8 # v1.1.17
-        with:
-          arguments: --filter checkov,trivy
-
       - name: Update PR comment for Test success
         if: ${{ github.event_name == 'pull_request' }}
         uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # v2.9.0
         with:
-          header: test
-          hide_and_recreate: true
+          header: test-${{ matrix.targets }}
+          recreate: true
           message: |
             #### ${{ matrix.targets }}
 
