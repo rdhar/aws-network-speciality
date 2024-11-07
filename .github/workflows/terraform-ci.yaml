@@ -111,8 +111,8 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         id: tflint
         run: |
-          tflint -chdir=${{ matrix.targets }} --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl --init
-          tflint -chdir=${{ matrix.targets }} --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl --format compact
+          tflint --chdir=${{ matrix.targets }} --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl --init
+          tflint --chdir=${{ matrix.targets }} --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl --format compact
         continue-on-error: true
 
       # Add PR comment then exit workflow if TFLint detects a violation
