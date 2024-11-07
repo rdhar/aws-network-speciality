@@ -90,6 +90,7 @@ jobs:
           arg-lock: false
           format: true
           validate: true
+          label-pr: false
 
       - name: Cache TFLint plugin directory
         if: ${{ github.event_name == 'pull_request' }}
@@ -111,8 +112,8 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         id: tflint
         run: |
-          tflint -chdir=${{ matrix.targets }} --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl --init
-          tflint -chdir=${{ matrix.targets }} --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl --format compact
+          tflint --chdir=${{ matrix.targets }} --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl --init
+          tflint --chdir=${{ matrix.targets }} --config=$GITHUB_WORKSPACE/.trunk/configs/.tflint_ci.hcl --format compact
         continue-on-error: true
 
       # Add PR comment then exit workflow if TFLint detects a violation
@@ -134,7 +135,7 @@ jobs:
           comment=$(gh api /repos/{owner}/{repo}/issues/comments/${{ steps.tf.outputs.comment-id }} --method GET --jq '.body')
 
           # Replace placeholder with TFLint output.
-          comment=$(echo "$comment" | sed "s|<!-- placeholder-2 -->|$tflint|")
+          comment="${comment//<!-- placeholder-2 -->/$tflint}"
 
           # Update PR comment combined with TFLint output.
           gh api /repos/{owner}/{repo}/issues/comments/${{ steps.tf.outputs.comment-id }} --method PATCH --field body="$comment"
