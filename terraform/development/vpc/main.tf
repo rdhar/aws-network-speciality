@@ -29,7 +29,7 @@ module "vpc" {
 }
 
 locals {
-  admin_port = 22
+  admin-port = 22
 }
 
 # Use for_each to create security group rules to avoid creation of duplicate rules
