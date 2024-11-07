@@ -90,6 +90,7 @@ jobs:
           arg-lock: false
           format: true
           validate: true
+          label-pr: false
 
       - name: Cache TFLint plugin directory
         if: ${{ github.event_name == 'pull_request' }}
