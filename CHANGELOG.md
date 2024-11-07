@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0](https://github.com/3ware/aws-network-speciality/compare/v1.5.3...v1.6.0) (2024-11-07)
+
+
+### Features
+
+* **vpc:** Add ec2 server ([#55](https://github.com/3ware/aws-network-speciality/issues/55)) ([39d3e1b](https://github.com/3ware/aws-network-speciality/commit/39d3e1ba3849226c6e2f127735319eaaf8f7bfa2))
+
 ## [1.5.3](https://github.com/3ware/aws-network-speciality/compare/v1.5.2...v1.5.3) (2024-09-19)
 
 
