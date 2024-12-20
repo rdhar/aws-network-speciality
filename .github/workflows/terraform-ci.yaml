@@ -84,9 +84,10 @@ jobs:
       - name: Terraform Fmt + Init + Validate
         if: ${{ github.event_name == 'pull_request' }}
         id: tf
-        uses: devsectop/tf-via-pr@a917bd222a6a780f25d2c5cd1942f6b2c2f16a7a # v12.0.5
+        uses: op5dev/tf-via-pr@f455e10e6e83d28f53f505a2d8242433a17536f3 # v13.0.0
         with:
           working-directory: ${{ matrix.targets }}
+          command: init
           arg-lock: false
           format: true
           validate: true
@@ -144,7 +145,7 @@ jobs:
           exit 1
 
       - name: Terraform ${{ format('{0}', github.event_name == 'merge_group' && 'Apply' || 'Plan') }}
-        uses: devsectop/tf-via-pr@a917bd222a6a780f25d2c5cd1942f6b2c2f16a7a # v12.0.5
+        uses: op5dev/tf-via-pr@f455e10e6e83d28f53f505a2d8242433a17536f3 # v13.0.0
         with:
           working-directory: ${{ matrix.targets }}
           command: ${{ github.event_name == 'merge_group' && 'apply' || 'plan' }}
